@@ -1,9 +1,9 @@
 ---
-name: review
-description: Review a PR number or diff against this project's requirements, design docs, and domain constraints (read-only client, source URLs, key masking). Use when the user asks for a code review of project changes.
+name: pr-review
+description: Review a PR number or diff against this project's requirements, design docs, and domain constraints (read-only client, source URLs, key masking). Use when the user asks for a code review of project changes. (Named pr-review to avoid colliding with the built-in /review skill.)
 ---
 
-# review — Code review
+# pr-review — Code review
 
 Take a PR number (or a diff) and review it against the requirements, design docs, and project constraints.
 
