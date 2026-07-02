@@ -1,6 +1,6 @@
 ---
-mode: agent
-description: Complete a long implementation task autonomously without interruptions
+name: long-run
+description: Complete a long implementation task autonomously without unnecessary confirmation pauses. Use when the user asks for extended autonomous implementation work.
 ---
 
 # long-run — Long autonomous implementation

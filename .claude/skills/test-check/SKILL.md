@@ -1,6 +1,6 @@
 ---
-mode: agent
-description: Run the implementation-complete checklist and provide the test record template
+name: test-check
+description: Run the implementation-complete checklist (tests, exit codes, domain constraints) and provide the test record template. Use before declaring an implementation task done.
 ---
 
 # test-check — Implementation-complete check

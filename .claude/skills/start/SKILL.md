@@ -1,6 +1,6 @@
 ---
-mode: agent
-description: Check GitHub Issues when starting work and create a branch in one flow
+name: start
+description: Check open GitHub Issues, pick one to work on, and create a branch. Use when starting a new work session or when the user asks what to work on next.
 ---
 
 # start — Begin work

@@ -1,6 +1,6 @@
 ---
-mode: agent
-description: Create a new branch from main and start development
+name: new-feature
+description: Create a new branch from main and start development. Use when the user wants to start a new feature, fix, or chore branch.
 ---
 
 # new-feature — Create a branch
@@ -10,8 +10,8 @@ Create a new branch from main and start development.
 ## Usage
 
 ```
-@new-feature feature/user-authentication
-@new-feature fix/login-redirect-error
+/new-feature feature/user-authentication
+/new-feature fix/login-redirect-error
 ```
 
 ## Steps

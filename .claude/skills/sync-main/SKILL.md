@@ -1,6 +1,6 @@
 ---
-mode: agent
-description: Sync main to the latest and rebase the current branch
+name: sync-main
+description: Sync main to the latest and rebase the current working branch. Use when the working branch has fallen behind main or before creating a PR.
 ---
 
 # sync-main — Sync main & rebase
