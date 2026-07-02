@@ -1,55 +1,55 @@
 ---
 mode: agent
-description: 作業開始時に GitHub Issues を確認し、ブランチ作成まで一括実行する
+description: Check GitHub Issues when starting work and create a branch in one flow
 ---
 
-# start — 作業開始
+# start — Begin work
 
-新しい作業を始める前に GitHub Issues を確認し、取り掛かる Issue を選んでブランチを切る。
+Before starting new work, check GitHub Issues, pick one to work on, and create a branch.
 
-## 手順
+## Steps
 
-0. 事前チェック
+0. Pre-check
 
    ```bash
    gh auth status
    ```
 
-1. Open な Issue 一覧を取得する
+1. List open issues
 
    ```bash
-   gh issue list --repo MunehiroSoma/pc-lending-manager --state open
+   gh issue list --repo MunehiroSoma/backlog-knowledge-packager --state open
    ```
 
-1. ラベル・マイルストーンを確認して作業候補を提示し、ユーザーに選んでもらう
+1. Review labels and milestones, present work candidates, and let the user choose
 
-1. 選ばれた Issue の詳細を確認する
+1. Inspect the chosen issue
 
    ```bash
-   gh issue view <番号> --repo MunehiroSoma/pc-lending-manager
+   gh issue view <number> --repo MunehiroSoma/backlog-knowledge-packager
    ```
 
-1. Issue 種別に応じたブランチを切る
+1. Create a branch matching the issue type
 
    ```bash
    git checkout main && git pull origin main
    git checkout -b <prefix>/<issue-slug>
    ```
 
-1. 作業開始コメントを Issue に残す（任意）
+1. Leave a start-of-work comment on the issue (optional; comment text in Japanese)
 
    ```bash
-   gh issue comment <番号> --body "作業開始します。ブランチ: <ブランチ名>"
+   gh issue comment <number> --body "作業開始します。ブランチ: <branch-name>"
    ```
 
-## ブランチ命名規則
+## Branch naming convention
 
-| プレフィックス | 用途             |
-| -------------- | ---------------- |
-| `feature/`     | 新機能           |
-| `fix/`         | バグ修正         |
-| `hotfix/`      | 緊急の本番修正   |
-| `chore/`       | 設定・依存関係   |
-| `refactor/`    | リファクタリング |
+| Prefix | Purpose |
+|--------|---------|
+| `feature/` | New feature |
+| `fix/` | Bug fix |
+| `hotfix/` | Urgent production fix |
+| `chore/` | Config / dependencies |
+| `refactor/` | Refactoring |
 
-すべて kebab-case（英小文字・ハイフン区切り）。
+All kebab-case (lowercase letters and hyphens).

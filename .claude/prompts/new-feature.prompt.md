@@ -1,41 +1,41 @@
 ---
 mode: agent
-description: 新しいブランチを main から切って開発を開始する
+description: Create a new branch from main and start development
 ---
 
-# new-feature — ブランチ作成
+# new-feature — Create a branch
 
-新しいブランチを main から切って開発を開始する。
+Create a new branch from main and start development.
 
-## 使い方
+## Usage
 
 ```
 @new-feature feature/user-authentication
 @new-feature fix/login-redirect-error
 ```
 
-## 手順
+## Steps
 
-1. main を最新に更新する
+1. Update main to the latest
 
    ```bash
    git checkout main && git pull origin main
    ```
 
-1. ブランチを作成する
+1. Create the branch
 
    ```bash
-   git checkout -b <prefix>/<ブランチ名>
+   git checkout -b <prefix>/<branch-name>
    ```
 
-## ブランチ命名規則
+## Branch naming convention
 
-| プレフィックス | 用途                   | 例                               |
-| -------------- | ---------------------- | -------------------------------- |
-| `feature/`     | 新機能                 | `feature/user-authentication`    |
-| `fix/`         | バグ修正               | `fix/login-redirect-error`       |
-| `hotfix/`      | 緊急の本番修正         | `hotfix/token-null-pointer`      |
-| `chore/`       | 設定・ビルド・依存関係 | `chore/update-deps`              |
-| `refactor/`    | リファクタリング       | `refactor/extract-service-layer` |
+| Prefix | Purpose | Example |
+|--------|---------|---------|
+| `feature/` | New feature | `feature/user-authentication` |
+| `fix/` | Bug fix | `fix/login-redirect-error` |
+| `hotfix/` | Urgent production fix | `hotfix/token-null-pointer` |
+| `chore/` | Config / build / dependencies | `chore/update-deps` |
+| `refactor/` | Refactoring | `refactor/extract-service-layer` |
 
-すべて kebab-case（英小文字・ハイフン区切り）。日本語・スペース・アンダースコア禁止。
+All kebab-case (lowercase letters and hyphens). No Japanese, spaces, or underscores.

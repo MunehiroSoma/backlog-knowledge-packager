@@ -1,37 +1,37 @@
 ---
 mode: agent
-description: main を最新に同期し、現在のブランチをリベースする
+description: Sync main to the latest and rebase the current branch
 ---
 
-# sync-main — main 同期 & リベース
+# sync-main — Sync main & rebase
 
-main を最新に同期し、現在の作業ブランチをリベースする。
+Sync main to the latest and rebase the current working branch.
 
-## 手順
+## Steps
 
-1. 現在のブランチを確認する
+1. Check the current branch
 
    ```bash
    git branch --show-current
    ```
 
-1. main を最新に更新する
+1. Update main to the latest
 
    ```bash
    git fetch origin
    git checkout main && git pull origin main
    ```
 
-1. 元のブランチに戻ってリベースする
+1. Return to the original branch and rebase
 
    ```bash
-   git checkout <元のブランチ>
+   git checkout <original-branch>
    git rebase main
    ```
 
-1. コンフリクトがあれば内容を確認してユーザーに報告する
+1. If there are conflicts, inspect them and report to the user
 
-## 注意
+## Notes
 
-- リベース後に push が必要な場合は `git push --force-with-lease` を使う
-- コンフリクトが複雑な場合はユーザーに確認してから進める
+- If a push is needed after rebasing, use `git push --force-with-lease`
+- For complex conflicts, confirm with the user before proceeding

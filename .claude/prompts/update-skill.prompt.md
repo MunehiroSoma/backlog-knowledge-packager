@@ -1,44 +1,44 @@
 ---
 mode: agent
-description: 使用したプロンプトの実行結果を振り返り、.github/prompts/ の内容を改善する
+description: Reflect on how a prompt performed and improve the files in .claude/prompts/
 ---
 
-# update-skill — プロンプト改善
+# update-skill — Improve prompts
 
-直前に使用したプロンプトの実行を振り返り、`.github/prompts/` の内容を改善する。
+Reflect on the most recently used prompt and improve the contents of `.claude/prompts/`.
 
-## 振り返り観点
+## Reflection points
 
-- 手順が曖昧で判断に迷った箇所はあったか？
-- 手順が多すぎ / 少なすぎたか？
-- エラーや想定外の動作が起きたか？
-- より簡潔または効果的な方法があったか？
-- コマンド例が古くなっていないか？
+- Were any steps ambiguous enough to cause hesitation?
+- Were there too many / too few steps?
+- Did errors or unexpected behavior occur?
+- Was there a simpler or more effective approach?
+- Are any command examples outdated?
 
-## 手順
+## Steps
 
-1. 対象プロンプトファイルを読む
+1. Read the target prompt file
 
    ```
-   .github/prompts/<name>.prompt.md
+   .claude/prompts/<name>.prompt.md
    ```
 
-1. 改善案を提示する（変更前 / 変更後を明示）
+1. Propose improvements (show before / after explicitly)
 
-1. 承認後にファイルを更新し、コミットする
+1. After approval, update the file and commit
 
    ```bash
-   git add .github/prompts/<name>.prompt.md
+   git add .claude/prompts/<name>.prompt.md
    git commit -m "chore: <name> プロンプトを改善"
    ```
 
-## 改善の判断基準
+## Criteria for changes
 
-| 状況                     | 対応                     |
-| ------------------------ | ------------------------ |
-| 手順が曖昧で毎回迷う     | 具体例を追加する         |
-| 手順が長すぎる           | 本質でない手順を削除する |
-| コマンドがエラーになった | 正しいコマンドに修正する |
-| 使わない手順がある       | 削除する                 |
+| Situation | Action |
+|-----------|--------|
+| A step is ambiguous every time | Add a concrete example |
+| Steps are too long | Remove non-essential steps |
+| A command errored | Fix to the correct command |
+| A step is never used | Delete it |
 
-承認なしにファイルを書き換えない。
+Never rewrite a file without approval.

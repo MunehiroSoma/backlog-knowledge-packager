@@ -1,47 +1,46 @@
 ---
 mode: agent
-description: 長時間の実装タスクを中断せず自走で完遂する
+description: Complete a long implementation task autonomously without interruptions
 ---
 
-# long-run — 長時間自走実装
+# long-run — Long autonomous implementation
 
-長時間の実装タスクを、不要な確認待ちを挟まずに継続実行する。
+Run a long implementation task continuously without unnecessary confirmation pauses.
 
-## 実行前提
+## Ground rules
 
-- 明示的な停止指示があるまで実装・検証・修正を継続する
-- マイルストーンごとに進捗を共有するが「続けてよいか」の確認は原則しない
-- 判断が必要な箇所は影響が小さい側に倒して前進する
+- Keep implementing, verifying, and fixing until an explicit stop instruction
+- Share progress at each milestone, but do not ask "may I continue?" as a rule
+- When a judgment call is needed, choose the lower-impact option and keep moving
 
-## ブランチ運用
+## Branch workflow
 
 ```bash
-# 1. main から feature ブランチを切る
+# 1. Create a feature branch from main
 git checkout main && git pull origin main
 git checkout -b feature/<task-slug>
 
-# 2. 実装・検証・修正を繰り返す
+# 2. Repeat: implement, verify, fix
 
-# 3. 完了したら push して PR を作成する
+# 3. When done, push and create a PR
 git push origin feature/<task-slug>
 gh pr create ...
 ```
 
-> `autopilot/` プレフィックスは使用しない。ブランチ命名規則: `feature/` `fix/` `chore/` 等。
+> Do not use an `autopilot/` prefix. Branch naming: `feature/` `fix/` `chore/` etc.
 
-## 実行ループ
+## Execution loop
 
-1. 目的と完了条件を確認する
-1. 影響範囲を調査し、最短で価値が出る順に実装する
-1. 実装後に検証を実行する
+1. Confirm the goal and completion criteria
+1. Investigate the impact area and implement in the order that delivers value fastest
+1. Verify after implementing
    ```bash
-   cd backend && pre-commit run --all-files && pytest
-   cd frontend && npm run lint
+   cd backlog-knowledge-packager && uv run pytest
    ```
-1. 失敗したら自己修正して再実行する（通るまで繰り返す）
-1. 完了条件を満たしたら結果・未解決事項・次の推奨アクションを報告する
+1. On failure, self-fix and re-run (repeat until green)
+1. When the completion criteria are met, report results, open items, and recommended next actions
 
-## ブロック時の動き
+## When blocked
 
-- 10 分以上進捗が止まる場合は代替案を先に試す
-- 解消しない場合のみ、質問は 1 回・短文で行う
+- If no progress for 10+ minutes, try an alternative approach first
+- Only if still stuck, ask exactly one short question

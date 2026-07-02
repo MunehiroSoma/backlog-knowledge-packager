@@ -1,70 +1,68 @@
 ---
 mode: agent
-description: 現在のブランチの変更をコミット → push → PR 作成まで一括で行う
+description: Commit the current branch's changes, push, and create a PR in one flow
 ---
 
-# ship — コミット・push・PR
+# ship — Commit, push, PR
 
-現在のブランチの変更をコミット → push → PR 作成まで一括で行う。
+Commit the current branch's changes, push, and create a PR in one flow.
 
-> **GitHub Flow** 準拠。`main` へ直接 push せず、必ず PR 経由でマージする。
-> 詳細: [`docs/standards/git運用フロー.md`](../../docs/standards/git%E9%81%8B%E7%94%A8%E3%83%95%E3%83%AD%E3%83%BC.md)
+> Follows **GitHub Flow**. Never push directly to `main`; always merge via PR.
 
-## 手順
+## Steps
 
-1. 変更を確認する
+1. Review the changes
 
    ```bash
    git status --short && git diff --stat
    ```
 
-1. Lint・フォーマット・型チェックを通す
+1. Run checks (once the implementation project exists)
 
    ```bash
-   # Backend
-   cd backend && pre-commit run --all-files
-   # Frontend
-   cd frontend && npm run lint && npm run format:check
+   cd backlog-knowledge-packager && uv run pytest
    ```
 
-1. ステージングとコミット
+1. Stage and commit
 
    ```bash
-   git add <関連ファイル>
-   git commit -m "<type>: <概要（日本語）>"
+   git add <related-files>
+   git commit -m "<type>: <summary in Japanese>"
    ```
 
-1. push する
+1. Push
 
    ```bash
    git push origin <current-branch>
    ```
 
-1. PR を作成する
+1. Create the PR (PR title/body in Japanese)
 
    ```bash
    gh pr create \
-     --title "<type>: <概要>" \
+     --title "<type>: <summary>" \
      --body "## 概要
    <変更内容>
 
    ## 関連 Issue
-   Closes #<番号>
+   Closes #<number>
 
    ## 確認事項
    - [ ] 正常系確認
    - [ ] 異常系確認
-   - [ ] Lint・型チェック通過"
+   - [ ] テスト通過"
    ```
 
-## コミットメッセージ規則
+## Commit message convention
 
-| type       | 用途                             |
-| ---------- | -------------------------------- |
-| `feat`     | 新機能                           |
-| `fix`      | バグ修正                         |
-| `docs`     | ドキュメント                     |
-| `refactor` | リファクタリング                 |
-| `chore`    | 設定・依存関係更新               |
-| `test`     | テスト追加・修正                 |
-| `style`    | フォーマット修正（動作変更なし） |
+Format: `<type>: <summary in Japanese>`
+
+| type | Purpose |
+|------|---------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation |
+| `refactor` | Refactoring |
+| `chore` | Config / dependency updates |
+| `test` | Add / fix tests |
+| `style` | Formatting only (no behavior change) |

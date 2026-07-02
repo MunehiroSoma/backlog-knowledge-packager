@@ -1,34 +1,34 @@
 ---
 mode: agent
-description: GitHub Issue を正しい粒度・構造で登録する
+description: Register GitHub Issues with correct granularity and structure
 ---
 
-# create-issue — Issue 作成
+# create-issue — Create an Issue
 
-GitHub Issue を正しい粒度・構造で登録する。
+Register GitHub Issues with correct granularity and structure. Issue titles and bodies are written in Japanese.
 
-## Issue 種別
+## Issue types
 
-| 種別     | いつ使うか                              |
-| -------- | --------------------------------------- |
-| **Task** | 実装タスク単位（1〜3 日で完了する粒度） |
-| **Bug**  | コード上の不具合を発見したとき          |
+| Type | When to use |
+|------|-------------|
+| **Task** | One implementation task (completable in 1–3 days) |
+| **Bug** | A defect found in the code |
 
-## 登録前に必ず提示してレビューを受ける
+## Always present for review before registering
 
-1. 作成予定タイトル
-1. 付与予定ラベル・マイルストーン
-1. Issue 本文ドラフト（チェックリスト・完了条件を含む）
+1. Planned title
+1. Planned labels and milestone
+1. Draft body (including checklist and completion criteria)
 
-承認後に `gh issue create` を実行する。
+Run `gh issue create` only after approval.
 
-## Task Issue テンプレート
+## Task issue template (body in Japanese)
 
 ```markdown
 ## 概要
 <実装内容の概要>
 
-**WBS ID**: <ID> | **依存**: <依存WBS> | **優先度**: 高/低
+**対応要件**: FR-XX / NFR-XX（docs/requirements.md） | **設計**: docs/design.md §X | **優先度**: 高/低
 
 ## 完了条件
 <具体的な動作確認方法>
@@ -41,7 +41,7 @@ GitHub Issue を正しい粒度・構造で登録する。
 - <制約・バリデーション仕様>
 ```
 
-## Bug Issue テンプレート
+## Bug issue template (body in Japanese)
 
 ```markdown
 ## 概要
@@ -54,14 +54,14 @@ GitHub Issue を正しい粒度・構造で登録する。
 ...
 
 ## 問題箇所
-`<ファイルパス>` L<行番号>
+`<file path>` L<line number>
 ```
 
-## gh コマンド
+## gh command
 
 ```bash
 gh issue create \
-  --title "[WBS-XXX] <タイトル>" \
+  --title "<タイトル>" \
   --label "<label>" \
   --milestone "<milestone>" \
   --body "..."

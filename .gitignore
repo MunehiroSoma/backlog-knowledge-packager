@@ -16,6 +16,9 @@ env/
 build/
 dist/
 
+# Generated artifacts
+output/
+
 # Local tool state
 .claude/settings.local.json
 

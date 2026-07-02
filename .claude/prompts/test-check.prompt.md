@@ -1,55 +1,56 @@
 ---
 mode: agent
-description: 実装完了判定チェックリストを実行し、テスト記録テンプレートを提供する
+description: Run the implementation-complete checklist and provide the test record template
 ---
 
-# test-check — 実装完了チェック
+# test-check — Implementation-complete check
 
-実装完了判定チェックリストを実行する。以下をすべて満たすまで「完了」としない。
+Run the implementation-complete checklist. Do not declare "done" until all items pass.
 
-## 完了判定チェックリスト
+## Completion checklist
 
-### Backend
+### Code quality
 
-- [ ] `cd backend && pytest` 通過
-- [ ] `cd backend && ruff check . && mypy .` エラーなし
-- [ ] `cd backend && black --check . && ruff format --check .` 差分なし
+- [ ] `cd backlog-knowledge-packager && uv run pytest` passes
+- [ ] Type hints are present on changed functions/dataclasses
+- [ ] No new dependencies without justification (NFR-07)
 
-### Frontend
+### Happy path
 
-- [ ] `cd frontend && npm run lint` エラーなし
-- [ ] `cd frontend && npm run format:check` 差分なし
+- [ ] `collect` produces the expected outputs (knowledge.md / knowledge.json / references.md / setup-checklist.md / templates.zip / metadata/)
+- [ ] Every output item carries a source URL and updated timestamp (NFR-04)
 
-### 正常系
+### Error path
 
-- [ ] 期待通りの出力・レスポンスが返る
-- [ ] DB にレコードが正しく保存される（DB 操作がある場合）
+- [ ] Missing env vars / invalid arguments exit with code 1
+- [ ] API errors (auth failure, project not found) exit with code 2
+- [ ] Partial fetch failure exits with code 3 and logs the failed items
 
-### 異常系
+### Domain constraints
 
-- [ ] 不正入力で適切なエラーコードが返る（422/400/409/404 等）
-- [ ] ドメイン制約（二重貸出禁止・返却論理削除・パスワードハッシュ等）が守られている
+- [ ] The Backlog client has no write methods (FR-11)
+- [ ] `apiKey` does not appear in logs or outputs (NFR-01)
 
-## テストケース記録テンプレート
+## Test record template
 
-`docs/test/TC_<機能名>.md` に以下の形式で記録する。
+Record in `docs/test/TC_<feature>.md` in the following format (content may be in Japanese).
 
 ```markdown
-# TC_<機能名>
+# TC_<feature>
 
-## 実施情報
-- 実施日: YYYY-MM-DD
-- 実施者: <名前>
+## Session
+- Date: YYYY-MM-DD
+- Tester: <name>
 
-## 正常系
-| ケース | 手順 | 期待結果 | 結果 |
+## Happy path
+| Case | Steps | Expected | Result |
 |---|---|---|---|
 | | | | Pass/Fail |
 
-## 異常系
-| ケース | 手順 | 期待エラー | 結果 |
+## Error path
+| Case | Steps | Expected error | Result |
 |---|---|---|---|
 | | | | Pass/Fail |
 
-## 備考
+## Notes
 ```
