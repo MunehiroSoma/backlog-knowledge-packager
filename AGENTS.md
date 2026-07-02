@@ -37,7 +37,7 @@ backlog-knowledge-packager/ # Implementation (created in MVP Issue #1)
 - Work is driven by GitHub Issues (milestones: `v0.1 (MVP)` → `Phase 2` → `Phase 3` → `Phase 4`).
 - Never push directly to `main`; branch (`feature/` `fix/` `chore/` ...) → PR → merge. Branch protection is enabled on `main`.
 - Commit format: `<type>: <summary in Japanese>` (feat / fix / docs / refactor / chore / test / style).
-- See `.claude/skills/` for step-by-step workflow skills (invocable as `/start`, `/ship`, etc.): `start`, `new-feature`, `ship`, `review`, `test-check`, `sync-main`, `long-run`, `create-issue`, `update-skill`.
+- See `.claude/skills/` for step-by-step workflow skills (invocable as `/start`, `/ship`, etc.): `start`, `new-feature`, `ship`, `pr-review`, `test-check`, `sync-main`, `long-run`, `create-issue`, `update-skill`.
 
 ## Tech stack
 
