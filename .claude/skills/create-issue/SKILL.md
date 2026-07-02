@@ -1,6 +1,6 @@
 ---
-mode: agent
-description: Register GitHub Issues with correct granularity and structure
+name: create-issue
+description: Register GitHub Issues with correct granularity and structure. Use when the user wants to create a Task or Bug issue on the repository.
 ---
 
 # create-issue — Create an Issue

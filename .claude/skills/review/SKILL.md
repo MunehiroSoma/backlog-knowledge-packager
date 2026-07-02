@@ -1,13 +1,13 @@
 ---
-mode: agent
-description: Review a PR number or diff against the design docs and project constraints
+name: review
+description: Review a PR number or diff against this project's requirements, design docs, and domain constraints (read-only client, source URLs, key masking). Use when the user asks for a code review of project changes.
 ---
 
 # review — Code review
 
 Take a PR number (or a diff) and review it against the requirements, design docs, and project constraints.
 
-> Requirements: [`docs/requirements.md`](../../docs/requirements.md) / Design: [`docs/design.md`](../../docs/design.md)
+> Requirements: [`docs/requirements.md`](../../../docs/requirements.md) / Design: [`docs/design.md`](../../../docs/design.md)
 
 ## Input
 

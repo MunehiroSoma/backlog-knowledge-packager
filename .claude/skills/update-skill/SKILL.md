@@ -1,11 +1,11 @@
 ---
-mode: agent
-description: Reflect on how a prompt performed and improve the files in .claude/prompts/
+name: update-skill
+description: Reflect on how a skill performed and improve the files in .claude/skills/. Use after a skill produced a confusing or suboptimal result.
 ---
 
-# update-skill — Improve prompts
+# update-skill — Improve skills
 
-Reflect on the most recently used prompt and improve the contents of `.claude/prompts/`.
+Reflect on the most recently used skill and improve the contents of `.claude/skills/`.
 
 ## Reflection points
 
@@ -17,10 +17,10 @@ Reflect on the most recently used prompt and improve the contents of `.claude/pr
 
 ## Steps
 
-1. Read the target prompt file
+1. Read the target skill file
 
    ```
-   .claude/prompts/<name>.prompt.md
+   .claude/skills/<name>/SKILL.md
    ```
 
 1. Propose improvements (show before / after explicitly)
@@ -28,8 +28,8 @@ Reflect on the most recently used prompt and improve the contents of `.claude/pr
 1. After approval, update the file and commit
 
    ```bash
-   git add .claude/prompts/<name>.prompt.md
-   git commit -m "chore: <name> プロンプトを改善"
+   git add .claude/skills/<name>/SKILL.md
+   git commit -m "chore: <name> スキルを改善"
    ```
 
 ## Criteria for changes

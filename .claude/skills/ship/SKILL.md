@@ -1,6 +1,6 @@
 ---
-mode: agent
-description: Commit the current branch's changes, push, and create a PR in one flow
+name: ship
+description: Commit the current branch's changes, push, and create a PR in one flow. Use when work on a branch is complete and ready for a pull request.
 ---
 
 # ship — Commit, push, PR
