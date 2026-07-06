@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from dotenv import load_dotenv
 DEFAULT_DOMAIN = "backlog.com"
 DEFAULT_TARGETS = ("documents", "wiki", "shared-files")
 VALID_TARGETS = frozenset(DEFAULT_TARGETS)
+SPACE_KEY_PATTERN = re.compile(r"^[A-Za-z0-9-]+$")
+DOMAIN_PATTERN = re.compile(r"^[A-Za-z0-9.-]+$")
 
 
 class ConfigError(ValueError):
@@ -48,6 +51,8 @@ def load_collect_config(
     resolved_space = _required("BACKLOG_SPACE_KEY", space or os.getenv("BACKLOG_SPACE_KEY"))
     api_key = _required("BACKLOG_API_KEY", os.getenv("BACKLOG_API_KEY"))
     resolved_domain = (domain or os.getenv("BACKLOG_DOMAIN") or DEFAULT_DOMAIN).strip()
+    _validate_hostname_part("BACKLOG_SPACE_KEY", resolved_space, "letters, numbers, and hyphens")
+    _validate_hostname_part("BACKLOG_DOMAIN", resolved_domain, "letters, numbers, hyphens, and dots", pattern=DOMAIN_PATTERN)
     resolved_targets = parse_targets(targets)
     resolved_output = Path(output) if output is not None else Path("output") / resolved_project
     return CollectConfig(
@@ -76,3 +81,8 @@ def _required(name: str, value: str | None) -> str:
     if value is None or value.strip() == "":
         raise ConfigError(f"{name} is required")
     return value.strip()
+
+
+def _validate_hostname_part(name: str, value: str, allowed: str, pattern=SPACE_KEY_PATTERN) -> None:
+    if not pattern.fullmatch(value):
+        raise ConfigError(f"{name} must contain only {allowed}")

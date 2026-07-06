@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+import requests
 
 from backlog_packager.client import BacklogApiError, ReadOnlyBacklogClient, _mask_api_key
 
@@ -34,6 +35,12 @@ class FakeSession:
         return self.responses.pop(0)
 
 
+class FailingSession:
+    def get(self, url, params=None, stream=False, timeout=None):
+        request = requests.Request("GET", url, params=params).prepare()
+        raise requests.exceptions.SSLError("certificate failed", request=request)
+
+
 def test_get_adds_api_key_and_returns_json() -> None:
     session = FakeSession([FakeResponse(200, {"ok": True})])
     client = ReadOnlyBacklogClient("https://space.backlog.com", "secret", session=session)
@@ -62,6 +69,17 @@ def test_error_masks_api_key() -> None:
 
     assert "secret" not in str(exc_info.value)
     assert "apiKey=%2A%2A%2A" in str(exc_info.value)
+
+
+def test_request_exception_masks_api_key() -> None:
+    client = ReadOnlyBacklogClient("https://space.backlog.com", "secret", session=FailingSession())
+
+    with pytest.raises(BacklogApiError) as exc_info:
+        client.get("/api")
+
+    assert "secret" not in str(exc_info.value)
+    assert "apiKey=%2A%2A%2A" in str(exc_info.value)
+    assert "SSLError" in str(exc_info.value)
 
 
 def test_client_has_no_write_methods() -> None:

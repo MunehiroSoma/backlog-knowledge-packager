@@ -52,7 +52,11 @@ class ReadOnlyBacklogClient:
         request_params["apiKey"] = self.api_key
         url = self._url(endpoint)
         for attempt in range(self.max_retries + 1):
-            response = self.session.get(url, params=request_params, stream=stream, timeout=30)
+            try:
+                response = self.session.get(url, params=request_params, stream=stream, timeout=30)
+            except requests.RequestException as exc:
+                safe_url = _mask_api_key(getattr(getattr(exc, "request", None), "url", None) or _url_with_params(url, request_params))
+                raise BacklogApiError(f"GET {safe_url} failed: {exc.__class__.__name__}") from exc
             if response.status_code == 429 and attempt < self.max_retries:
                 time.sleep(self._retry_delay(response))
                 continue
@@ -83,4 +87,11 @@ def _mask_api_key(url: str) -> str:
     query = []
     for key, value in parse_qsl(parts.query, keep_blank_values=True):
         query.append((key, "***" if key == "apiKey" else value))
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def _url_with_params(url: str, params: dict[str, Any]) -> str:
+    parts = urlsplit(url)
+    query = parse_qsl(parts.query, keep_blank_values=True)
+    query.extend((key, str(value)) for key, value in params.items())
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))

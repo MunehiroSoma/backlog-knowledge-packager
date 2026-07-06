@@ -65,6 +65,26 @@ def test_parse_targets_rejects_unknown_value() -> None:
         parse_targets("documents,issues")
 
 
+def test_load_collect_config_rejects_invalid_space_key(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("BACKLOG_SPACE_KEY", raising=False)
+    monkeypatch.delenv("BACKLOG_API_KEY", raising=False)
+    monkeypatch.delenv("BACKLOG_PROJECT_KEY", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "BACKLOG_SPACE_KEY=invalid_space",
+                "BACKLOG_API_KEY=secret",
+                "BACKLOG_PROJECT_KEY=ENVPRJ",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="BACKLOG_SPACE_KEY"):
+        load_collect_config(project=None, env_file=env_file)
+
+
 def test_missing_required_config_raises(monkeypatch) -> None:
     monkeypatch.delenv("BACKLOG_SPACE_KEY", raising=False)
     monkeypatch.delenv("BACKLOG_API_KEY", raising=False)

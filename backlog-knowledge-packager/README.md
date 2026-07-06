@@ -20,6 +20,11 @@ uv sync
 cp .env.example .env   # then fill in BACKLOG_SPACE_KEY / BACKLOG_API_KEY / BACKLOG_PROJECT_KEY
 ```
 
+`BACKLOG_SPACE_KEY` is the subdomain part of the Backlog URL. For example,
+`https://your-space.backlog.com/` uses `BACKLOG_SPACE_KEY=your-space` and
+`BACKLOG_DOMAIN=backlog.com`. Use only letters, numbers, and hyphens in the
+space key.
+
 ## Usage
 
 ```bash
