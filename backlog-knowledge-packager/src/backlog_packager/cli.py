@@ -30,6 +30,11 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--targets", help="Comma-separated targets: documents,wiki,shared-files.")
     collect.add_argument("--output", help="Output directory. Defaults to ./output/{PROJECT_KEY}.")
     collect.add_argument(
+        "--skip-shared-file-downloads",
+        action="store_true",
+        help="List shared-file metadata without downloading file bodies. Useful for very large shared-file trees.",
+    )
+    collect.add_argument(
         "--classification-rules",
         help="Optional JSON file with project-specific classification category and tag keywords.",
     )
@@ -97,13 +102,21 @@ def run_collect(args: argparse.Namespace) -> int:
     client = ReadOnlyBacklogClient(config.base_url, config.api_key)
     try:
         client.get("/api/v2/space")
-        client.get(f"/api/v2/projects/{config.project}")
+        project = client.get(f"/api/v2/projects/{config.project}")
     except BacklogApiError as exc:
         print(f"api error: {exc}", file=sys.stderr)
         return 2
 
     cache = load_cached_items(config.output / "metadata" / "source-map.json")
-    collection = _collect_targets(client, config.project, config.targets, config.output, cache)
+    collection = _collect_targets(
+        client,
+        config.project,
+        _project_id(project) or config.project,
+        config.targets,
+        config.output,
+        cache,
+        shared_file_downloads=not args.skip_shared_file_downloads,
+    )
     items = classify_items(
         normalize_collection(
             collection=collection,
@@ -161,18 +174,31 @@ def run_verify_output(args: argparse.Namespace) -> int:
 def _collect_targets(
     client: ReadOnlyBacklogClient,
     project_key: str,
+    document_project_id: str,
     targets: tuple[str, ...],
     output_dir,
     cache,
+    shared_file_downloads: bool = True,
 ) -> CollectionResult:
     collection = CollectionResult()
     if "documents" in targets:
-        collection.extend(collect_documents(client, project_key, cache=cache))
+        collection.extend(collect_documents(client, document_project_id, cache=cache))
     if "wiki" in targets:
         collection.extend(collect_wikis(client, project_key, cache=cache))
     if "shared-files" in targets:
-        collection.extend(collect_shared_files(client, project_key, output_dir=output_dir, cache=cache))
+        collection.extend(
+            collect_shared_files(client, project_key, output_dir=output_dir, cache=cache, download=shared_file_downloads)
+        )
     return collection
+
+
+def _project_id(project: object) -> str | None:
+    if not isinstance(project, dict):
+        return None
+    value = project.get("id")
+    if value in (None, ""):
+        return None
+    return str(value)
 
 
 if __name__ == "__main__":

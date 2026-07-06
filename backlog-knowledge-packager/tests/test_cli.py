@@ -4,7 +4,8 @@ import zipfile
 from backlog_packager import cli
 
 
-def test_collect_returns_config_error_for_missing_env(monkeypatch, capsys) -> None:
+def test_collect_returns_config_error_for_missing_env(monkeypatch, capsys, tmp_path) -> None:
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("BACKLOG_SPACE_KEY", raising=False)
     monkeypatch.delenv("BACKLOG_API_KEY", raising=False)
 
@@ -24,6 +25,8 @@ def test_collect_generates_outputs_from_documents(monkeypatch, capsys, tmp_path)
 
         def get(self, endpoint, params=None):
             calls.append((endpoint, params))
+            if endpoint == "/api/v2/projects/DEMO":
+                return {"id": 123}
             if endpoint == "/api/v2/documents":
                 return [
                     {
@@ -54,6 +57,7 @@ def test_collect_generates_outputs_from_documents(monkeypatch, capsys, tmp_path)
     assert exit_code == 0
     assert calls[0] == ("/api/v2/space", None)
     assert calls[1] == ("/api/v2/projects/DEMO", None)
+    assert calls[2] == ("/api/v2/documents", {"projectId[]": "123", "offset": 0, "count": 100})
     assert (tmp_path / "knowledge.md").exists()
     assert (tmp_path / "onboarding.md").exists()
     assert (tmp_path / "warnings.md").exists()
@@ -247,6 +251,31 @@ def test_collect_uses_project_key_from_env_when_project_arg_is_omitted(monkeypat
     assert (tmp_path / "output" / "ENVPRJ" / "knowledge.md").exists()
 
 
+def test_collect_uses_numeric_project_id_for_document_list(monkeypatch, tmp_path) -> None:
+    calls = []
+
+    class FakeClient:
+        def __init__(self, base_url, api_key):
+            pass
+
+        def get(self, endpoint, params=None):
+            calls.append((endpoint, params))
+            if endpoint == "/api/v2/projects/DEMO":
+                return {"id": 987}
+            if endpoint == "/api/v2/documents":
+                return []
+            return {}
+
+    monkeypatch.setenv("BACKLOG_SPACE_KEY", "space")
+    monkeypatch.setenv("BACKLOG_API_KEY", "secret")
+    monkeypatch.setattr(cli, "ReadOnlyBacklogClient", FakeClient)
+
+    exit_code = cli.main(["collect", "--project", "DEMO", "--targets", "documents", "--output", str(tmp_path)])
+
+    assert exit_code == 0
+    assert calls[2] == ("/api/v2/documents", {"projectId[]": "987", "offset": 0, "count": 100})
+
+
 def test_collect_second_run_skips_unchanged_detail_fetch_and_download(monkeypatch, tmp_path) -> None:
     created_clients = []
 
@@ -320,6 +349,58 @@ def test_collect_second_run_skips_unchanged_detail_fetch_and_download(monkeypatc
         template_names = [name for name in archive.namelist() if name.startswith("project-package/templates/")]
         assert template_names
         assert archive.read(template_names[0]) == b"template"
+
+
+def test_collect_can_skip_shared_file_downloads(monkeypatch, tmp_path) -> None:
+    created_clients = []
+
+    class FakeClient:
+        def __init__(self, base_url, api_key):
+            self.download_calls = 0
+            created_clients.append(self)
+
+        def get(self, endpoint, params=None):
+            if endpoint in {"/api/v2/space", "/api/v2/projects/DEMO"}:
+                return {}
+            if endpoint.startswith("/api/v2/projects/DEMO/files/metadata/"):
+                return [
+                    {
+                        "id": "2",
+                        "type": "file",
+                        "dir": "/templates/",
+                        "name": "issue-template.md",
+                        "created": "2026-07-01T00:00:00Z",
+                        "updated": "2026-07-02T00:00:00Z",
+                    }
+                ]
+            return []
+
+        def download(self, endpoint, dest, params=None):
+            self.download_calls += 1
+            return dest
+
+    monkeypatch.setenv("BACKLOG_SPACE_KEY", "space")
+    monkeypatch.setenv("BACKLOG_API_KEY", "secret")
+    monkeypatch.setattr(cli, "ReadOnlyBacklogClient", FakeClient)
+
+    exit_code = cli.main(
+        [
+            "collect",
+            "--project",
+            "DEMO",
+            "--targets",
+            "shared-files",
+            "--skip-shared-file-downloads",
+            "--output",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert created_clients[0].download_calls == 0
+    summary = json.loads((tmp_path / "metadata" / "collection-summary.json").read_text(encoding="utf-8"))
+    assert summary["shared-files"]["files"] == 1
+    assert summary["shared-files"]["downloaded"] == 0
 
 
 def test_collect_check_urls_writes_broken_link_warning(monkeypatch, tmp_path) -> None:

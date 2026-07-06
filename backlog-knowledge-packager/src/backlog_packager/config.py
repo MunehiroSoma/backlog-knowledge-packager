@@ -46,7 +46,7 @@ def load_collect_config(
 ) -> CollectConfig:
     """Load .env values and apply CLI argument overrides."""
 
-    load_dotenv(dotenv_path=env_file)
+    load_dotenv(dotenv_path=env_file or Path(".env"))
     resolved_project = _required("project", project or os.getenv("BACKLOG_PROJECT_KEY"))
     resolved_space = _required("BACKLOG_SPACE_KEY", space or os.getenv("BACKLOG_SPACE_KEY"))
     api_key = _required("BACKLOG_API_KEY", os.getenv("BACKLOG_API_KEY"))

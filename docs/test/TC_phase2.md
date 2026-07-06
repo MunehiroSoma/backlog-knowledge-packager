@@ -75,6 +75,8 @@ uv run backlog-packager collect \
 
 Use `--check-source-urls` only when the Backlog source URLs are reachable from the execution environment without browser-only authentication.
 
+For very large shared-file trees, add `--skip-shared-file-downloads` to the `collect` commands and record that shared-file acceptance used metadata-only collection. This still preserves shared-file source URLs and updated timestamps, but file bodies are not downloaded or bundled.
+
 ## Partial Failure Handling
 
 `collect` exits with code `3` when at least one target or item has a non-fatal collection failure after the package is generated. The command prints each failure as `partial failure: ...` on stderr.

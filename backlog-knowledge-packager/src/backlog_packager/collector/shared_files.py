@@ -21,7 +21,7 @@ def collect_shared_files(
     download: bool = True,
 ) -> CollectionResult:
     failures: list[str] = []
-    files = _list_directory_recursive(client, project_key, "/", count=count, failures=failures)
+    files = _list_directory_recursive(client, project_key, "/", count=count, failures=failures, visited=set())
     item_cache = cache or {}
     changed = filter_updated_items("sharedFile", files, item_cache)
     downloaded = 0
@@ -74,13 +74,18 @@ def _list_directory_recursive(
     path: str,
     count: int,
     failures: list[str],
+    visited: set[str],
 ) -> list[dict[str, Any]]:
-    items = _list_directory(client, project_key, path, count, failures)
+    normalized_path = _normalize_directory_path(path)
+    if normalized_path in visited:
+        return []
+    visited.add(normalized_path)
+    items = _list_directory(client, project_key, normalized_path, count, failures)
     collected = list(items)
     for item in items:
         if item.get("type") == "directory":
             child_path = f"{item.get('dir', '/')}{item.get('name', '')}/"
-            collected.extend(_list_directory_recursive(client, project_key, child_path, count, failures))
+            collected.extend(_list_directory_recursive(client, project_key, child_path, count, failures, visited))
     return collected
 
 
@@ -126,3 +131,10 @@ def _safe_relative_file_path(item: dict[str, Any]) -> Path:
     safe_parts = [part for part in directory.split("/") if part not in ("", ".", "..")]
     safe_name = name.replace("/", "-").replace("\\", "-")
     return Path(*safe_parts, safe_name)
+
+
+def _normalize_directory_path(path: str) -> str:
+    parts = [part for part in str(path or "/").replace("\\", "/").split("/") if part not in ("", ".", "..")]
+    if not parts:
+        return "/"
+    return "/" + "/".join(parts) + "/"

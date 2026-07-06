@@ -42,6 +42,7 @@ On later runs, unchanged items are skipped by comparing source IDs and updated t
 
 Use `--check-urls` when you want `warnings.md` to include unreachable URLs found inside item bodies. This performs additional network requests and is disabled by default.
 Use `--check-source-urls` only when Backlog source URLs are publicly reachable from this environment; private Backlog spaces may fail unauthenticated URL checks even when the source is valid.
+Use `--skip-shared-file-downloads` for very large shared-file trees when metadata, source URLs, and updated timestamps are enough for the review. Shared-file bodies will not be bundled in that mode.
 
 For project-specific classification tuning, pass a JSON keyword file:
 

@@ -12,7 +12,7 @@ from . import CollectionResult
 
 def collect_documents(
     client: ReadOnlyBacklogClient,
-    project_key: str,
+    project_id: str,
     cache: dict[tuple[str, str], CachedItem] | None = None,
     count: int = 100,
 ) -> CollectionResult:
@@ -23,7 +23,14 @@ def collect_documents(
     are preserved when available.
     """
 
-    listed = _list_all_documents(client, project_key, count=count)
+    try:
+        listed = _list_all_documents(client, project_id, count=count)
+    except BacklogApiError as exc:
+        return CollectionResult(
+            metadata={"documents": {"list": [], "details": []}},
+            summary={"documents": {"listed": 0, "detailFetched": 0, "skippedByCache": 0}},
+            failures=[f"documents skipped: {exc}"],
+        )
     changed = filter_updated_items("document", listed, cache or {})
     details_by_id: dict[str, dict[str, Any]] = {}
     failures: list[str] = []
@@ -63,13 +70,13 @@ def collect_documents(
     )
 
 
-def _list_all_documents(client: ReadOnlyBacklogClient, project_key: str, count: int) -> list[dict[str, Any]]:
+def _list_all_documents(client: ReadOnlyBacklogClient, project_id: str, count: int) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     offset = 0
     while True:
         page = client.get(
             "/api/v2/documents",
-            params={"projectId[]": project_key, "offset": offset, "count": count},
+            params={"projectId[]": project_id, "offset": offset, "count": count},
         )
         page_items = _as_list(page)
         items.extend(page_items)

@@ -85,9 +85,9 @@ def test_load_collect_config_rejects_invalid_space_key(tmp_path, monkeypatch) ->
         load_collect_config(project=None, env_file=env_file)
 
 
-def test_missing_required_config_raises(monkeypatch) -> None:
+def test_missing_required_config_raises(monkeypatch, tmp_path) -> None:
     monkeypatch.delenv("BACKLOG_SPACE_KEY", raising=False)
     monkeypatch.delenv("BACKLOG_API_KEY", raising=False)
 
     with pytest.raises(ConfigError):
-        load_collect_config(project="PRJ")
+        load_collect_config(project="PRJ", env_file=tmp_path / ".env")

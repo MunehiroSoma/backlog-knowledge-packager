@@ -57,6 +57,20 @@ def test_collect_documents_records_detail_failure() -> None:
     ]
 
 
+def test_collect_documents_records_list_failure() -> None:
+    class ListFailureClient(FakeClient):
+        def get(self, endpoint, params=None):
+            if endpoint == "/api/v2/documents":
+                raise BacklogApiError("GET https://space.backlog.com/api/v2/documents failed with status 400")
+            return super().get(endpoint, params)
+
+    result = collect_documents(ListFailureClient(), "123")
+
+    assert result.documents == []
+    assert result.summary["documents"]["listed"] == 0
+    assert result.failures == ["documents skipped: GET https://space.backlog.com/api/v2/documents failed with status 400"]
+
+
 def test_collect_wikis_fetches_details() -> None:
     client = FakeClient()
 
@@ -104,6 +118,24 @@ def test_collect_shared_files_records_directory_failure(tmp_path) -> None:
     assert result.shared_files == []
     assert result.summary["shared-files"]["listed"] == 0
     assert result.failures == ["shared file directory skipped: /: GET https://space.backlog.com/api/v2/files failed with status 403"]
+
+
+def test_collect_shared_files_visits_each_directory_once(tmp_path) -> None:
+    class DuplicateDirectoryClient(FakeClient):
+        def get(self, endpoint, params=None):
+            self.calls.append((endpoint, params))
+            if endpoint.endswith("/files/metadata/"):
+                return [{"id": 1, "type": "directory", "dir": "/", "name": "docs"}]
+            if endpoint.endswith("/files/metadata/docs"):
+                return [{"id": 2, "type": "directory", "dir": "/", "name": "docs"}]
+            return []
+
+    client = DuplicateDirectoryClient()
+
+    result = collect_shared_files(client, "DEMO", tmp_path)
+
+    assert result.summary["shared-files"]["listed"] == 2
+    assert [call[0] for call in client.calls].count("/api/v2/projects/DEMO/files/metadata/docs") == 1
 
 
 def test_collect_shared_files_records_download_failure(tmp_path) -> None:

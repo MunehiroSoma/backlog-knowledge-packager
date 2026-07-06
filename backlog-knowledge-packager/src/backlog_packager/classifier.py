@@ -44,6 +44,26 @@ TAG_KEYWORDS: dict[str, tuple[str, ...]] = {
     "deprecated": ("旧", "old", "deprecated", "廃止", "obsolete"),
     "reference": ("http://", "https://", "url", "リンク", "参考", "参照"),
 }
+REFERENCE_EXTENSIONS = (
+    ".csv",
+    ".doc",
+    ".docx",
+    ".drawio",
+    ".html",
+    ".jpeg",
+    ".jpg",
+    ".json",
+    ".md",
+    ".pdf",
+    ".png",
+    ".ppt",
+    ".pptx",
+    ".txt",
+    ".xls",
+    ".xlsm",
+    ".xlsx",
+    ".zip",
+)
 
 
 def load_classification_rules(path: str | Path) -> tuple[CategoryKeywords, TagKeywords]:
@@ -81,6 +101,10 @@ def classify_text(
         keyword = _find_keyword(secondary, keywords)
         if keyword:
             return ClassificationResult(category, keyword, 0.65, tags_for_text(primary + " " + secondary, resolved_tags))
+
+    extension = _find_reference_extension(primary)
+    if extension:
+        return ClassificationResult("reference", extension, 0.45, tags_for_text(primary + " " + secondary, resolved_tags))
 
     return ClassificationResult("unclassified", None, 0.0, tags_for_text(primary + " " + secondary, resolved_tags))
 
@@ -187,6 +211,10 @@ def _find_keyword(text: str, keywords: Iterable[str]) -> str | None:
 
 def _normalize(text: str) -> str:
     return " ".join(text.casefold().split())
+
+
+def _find_reference_extension(text: str) -> str | None:
+    return next((extension for extension in REFERENCE_EXTENSIONS if extension in text), None)
 
 
 def _average_confidence(items: list[KnowledgeItem]) -> float:

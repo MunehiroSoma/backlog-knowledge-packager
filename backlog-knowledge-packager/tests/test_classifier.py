@@ -83,6 +83,14 @@ def test_unclassified_fallback() -> None:
     assert classify_text("random memo").category == "unclassified"
 
 
+def test_file_extension_falls_back_to_reference() -> None:
+    result = classify_text("network diagram.drawio")
+
+    assert result.category == "reference"
+    assert result.matched_keyword == ".drawio"
+    assert result.confidence == 0.45
+
+
 def test_classification_summary_reports_unclassified_rate_and_tags() -> None:
     items = [
         KnowledgeItem(
