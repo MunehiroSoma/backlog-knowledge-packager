@@ -119,15 +119,17 @@ Base URL: `https://{space}.{domain}` (`domain` is `backlog.com` / `backlog.jp` e
 | Project info | `GET /api/v2/projects/:projectIdOrKey` | Verify at implementation |
 | Document list | `GET /api/v2/documents?projectId[]=` | **Implemented in POC** |
 | Document detail | `GET /api/v2/documents/:documentId` | **Implemented in POC** |
-| Document tree | `GET /api/v2/documents/tree` (assumed) | **Needs verification** |
-| Document attachments list / DL | `GET /api/v2/documents/:id/attachments` (assumed) | **Needs verification** |
+| Document tree | `GET /api/v2/documents/tree?projectIdOrKey=` | API reference confirmed; implementation pending |
+| Document attachment DL | `GET /api/v2/documents/:documentId/attachments/:attachmentId` | API reference confirmed; implementation pending |
 | Wiki list | `GET /api/v2/wikis?projectIdOrKey=` | Verify at implementation |
 | Wiki detail | `GET /api/v2/wikis/:wikiId` | Verify at implementation |
-| Wiki attachment DL | `GET /api/v2/wikis/:wikiId/attachments/:attachmentId` | Verify at implementation |
+| Wiki attachment list | `GET /api/v2/wikis/:wikiId/attachments` | API reference confirmed; implementation pending |
+| Wiki attachment DL | `GET /api/v2/wikis/:wikiId/attachments/:attachmentId` | API reference confirmed; implementation pending |
 | Shared file list | `GET /api/v2/projects/:projectIdOrKey/files/metadata/:path` | Verify at implementation |
 | Shared file DL | `GET /api/v2/projects/:projectIdOrKey/files/:sharedFileId` | Verify at implementation |
+| Rate limit info | `GET /api/v2/rateLimit` | API reference confirmed; optional diagnostic endpoint |
 
-> **Note**: Endpoints marked "assumed" / "verify at implementation" must be finally confirmed against the [Backlog API reference](https://developer.nulab.com/ja/docs/backlog/) when implementation starts. The connection/retrieval pattern for the `GET /api/v2/documents` family is already implemented in the POC (`backlog-api-poc/document.py`).
+> **Note**: Endpoints marked "API reference confirmed; implementation pending" are confirmed in the public Backlog API reference but are not fully collected by the current MVP implementation. The connection/retrieval pattern for the `GET /api/v2/documents` family is already implemented in the POC (`backlog-api-poc/document.py`).
 >
 > Authentication: attach the `apiKey` query parameter to every request (same as the POC). **Write endpoints (POST / PATCH / PUT / DELETE) do not appear in this table = they are not used.**
 
@@ -395,6 +397,7 @@ backlog-packager verify-output \
 
 Custom category keywords are evaluated before built-in classifier keywords. Custom tag keywords are merged with built-in tags.
 `suggest` is added in Phase 3+ (`apply` is not implemented until Phase 4 — Requirements §7).
+See [`phase3_suggest_review.md`](./phase3_suggest_review.md) for the local-only operations checklist.
 
 ### 8.2 Environment variables (.env)
 
@@ -581,6 +584,7 @@ Detect the following and output as `warnings.md` (or a `warnings` array inside `
 - Implement the writing client as a **separate module** from `ReadOnlyBacklogClient`
 - Only items whose `review.json` is `approved` are applied
 - Webhook sync and permission-aware answers are also designed at this stage (Requirements FR-23 / FR-26 / FR-27)
+- See [`phase4_apply_boundary.md`](./phase4_apply_boundary.md) before designing or implementing apply mode.
 
 ---
 

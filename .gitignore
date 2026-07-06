@@ -18,6 +18,8 @@ dist/
 
 # Generated artifacts
 output/
+suggestions/
+**/suggestions/
 
 # Local tool state
 .claude/settings.local.json
