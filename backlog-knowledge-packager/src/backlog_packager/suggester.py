@@ -127,7 +127,7 @@ def _load_json_object(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise SuggestionError(f"missing input file: {path}")
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as exc:
         raise SuggestionError(f"invalid JSON in {path}: {exc}") from exc
     if not isinstance(payload, dict):

@@ -91,6 +91,19 @@ def test_list_reviews_returns_only_requested_status(tmp_path) -> None:
     assert pending == []
 
 
+def test_list_reviews_accepts_utf8_bom_review_files(tmp_path) -> None:
+    write_project_outputs("DEMO", [source_item()], tmp_path / "out")
+    generate_suggestions(tmp_path / "out", tmp_path / "suggestions")
+    review_path = tmp_path / "suggestions" / "document-123.review.json"
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    review["status"] = "approved"
+    review_path.write_text(json.dumps(review, ensure_ascii=False), encoding="utf-8-sig")
+
+    approved = list_reviews(tmp_path / "suggestions")
+
+    assert [entry.source_id for entry in approved] == ["123"]
+
+
 def test_suggest_cli_and_review_list_cli(capsys, tmp_path) -> None:
     write_project_outputs("DEMO", [source_item()], tmp_path / "out")
 
