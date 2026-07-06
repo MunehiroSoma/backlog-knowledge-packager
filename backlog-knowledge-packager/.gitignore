@@ -3,6 +3,7 @@
 
 # Generated artifacts
 output/
+suggestions/
 
 # Python
 __pycache__/

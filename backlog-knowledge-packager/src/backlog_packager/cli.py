@@ -15,6 +15,7 @@ from .collector.wikis import collect_wikis
 from .config import ConfigError, load_collect_config
 from .generator import build_requests_url_checker, write_project_outputs
 from .normalizer import normalize_collection
+from .suggester import SuggestionError, generate_suggestions, list_reviews
 from .sync import load_cached_items
 from .verify import verify_project_output, write_acceptance_report
 
@@ -69,6 +70,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write metadata/acceptance-report.md with Phase 2 verification evidence.",
     )
     verify.set_defaults(handler=run_verify_output)
+
+    suggest = subparsers.add_parser("suggest", help="generate local update proposal files from collected outputs")
+    suggest.add_argument(
+        "--output",
+        required=True,
+        help="Collected project output directory containing knowledge.json and metadata/source-map.json.",
+    )
+    suggest.add_argument(
+        "--suggestions",
+        help="Directory for local proposal files. Defaults to {output}/suggestions.",
+    )
+    suggest.set_defaults(handler=run_suggest)
+
+    review_list = subparsers.add_parser("review-list", help="list local review.json entries by status")
+    review_list.add_argument("--suggestions", required=True, help="Directory containing *.review.json files.")
+    review_list.add_argument(
+        "--status",
+        choices=("pending", "approved", "rejected"),
+        default="approved",
+        help="Review status to list. Defaults to approved.",
+    )
+    review_list.set_defaults(handler=run_review_list)
     return parser
 
 
@@ -169,6 +192,34 @@ def run_verify_output(args: argparse.Namespace) -> int:
         print(f"verified project package: {result.output_dir}", file=sys.stderr)
         return 0
     return 1
+
+
+def run_suggest(args: argparse.Namespace) -> int:
+    try:
+        written = generate_suggestions(args.output, args.suggestions)
+    except SuggestionError as exc:
+        print(f"suggestion error: {exc}", file=sys.stderr)
+        return 1
+    for suggestion in written:
+        print(
+            f"generated suggestion: {suggestion.source_type}:{suggestion.source_id} "
+            f"{suggestion.proposal_path} {suggestion.diff_path} {suggestion.review_path}",
+            file=sys.stderr,
+        )
+    print(f"generated {len(written)} local suggestions", file=sys.stderr)
+    return 0
+
+
+def run_review_list(args: argparse.Namespace) -> int:
+    try:
+        entries = list_reviews(args.suggestions, args.status)
+    except SuggestionError as exc:
+        print(f"review error: {exc}", file=sys.stderr)
+        return 1
+    for entry in entries:
+        print(f"{entry.source_type}:{entry.source_id}\t{entry.title}\t{entry.proposal_path}\t{entry.diff_path}")
+    print(f"listed {len(entries)} {args.status} review entries", file=sys.stderr)
+    return 0
 
 
 def _collect_targets(
