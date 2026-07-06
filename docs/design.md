@@ -96,7 +96,7 @@ Processing order:
 ### 3.3 Classifier
 
 - Keyword matching on titles and paths (§6.2)
-- MVP is rule-based only; AI semantic classification is a Phase 2+ extension
+- Content fallback classification, tags, matched keywords, and confidence scores are used for Phase 2 tuning without adding an external AI dependency
 
 ### 3.4 Generator
 
@@ -219,7 +219,7 @@ Keyword matching against titles (and file paths). **Evaluate top-down; the first
 
 - Because titles like「規約テンプレート」(convention template) match multiple categories, `template` is evaluated before `rule`
 - The keyword table is a code constant (configuration file in the future) so it can be tuned during operation
-- AI semantic classification (FR-16) is a Phase 2 extension; start rule-based to learn actual classification accuracy
+- Phase 2 adds content fallback classification, tag extraction, matched keyword metadata, confidence scores, and `classification-summary.json` quality metrics plus source-linked `unclassifiedItems` / `lowConfidenceItems` diagnostics. External AI semantic classification remains a future extension if project data shows the local classifier is not enough.
 
 ---
 
@@ -235,6 +235,7 @@ output/
     references.md         # Reference URL list for new members
     setup-checklist.md    # Environment-setup checklist
     onboarding.md         # (Phase 2)
+    warnings.md           # Stale, duplicate, and broken-link warnings (Phase 2)
     templates.zip         # Bundle of templates and convention files
     files/
       rules/              # Contents/files classified as rule
@@ -245,6 +246,9 @@ output/
       wiki.json
       shared-files.json
       source-map.json
+      classification-summary.json
+      collection-summary.json
+      partial-failures.json
 ```
 
 ### 7.2 Structure of knowledge.md
@@ -357,17 +361,47 @@ backlog-packager collect \
 |----------|:--------:|-------------|---------|
 | `--space` | — | Space key | Env var `BACKLOG_SPACE_KEY` |
 | `--domain` | — | `backlog.com` / `backlog.jp` etc. | Env var `BACKLOG_DOMAIN`, else `backlog.com` |
-| `--project` | ✓ | Project key | — |
+| `--project` | — | Project key | Env var `BACKLOG_PROJECT_KEY` |
 | `--targets` | — | Comma-separated set of `documents` / `wiki` / `shared-files` | all |
 | `--output` | — | Output directory | `./output/{PROJECT_KEY}` |
+| `--classification-rules` | — | Optional JSON file with project-specific classification category and tag keywords | none |
 
-`collect` is the only subcommand in the MVP. `suggest` is added in Phase 3+ (`apply` is not implemented until Phase 4 — Requirements §7).
+`verify-output` verifies generated packages before handoff or Phase 2 acceptance:
+
+```bash
+backlog-packager verify-output \
+  --output ./output/PROJECT_KEY \
+  --max-unclassified-rate 0.2 \
+  --require-cache-skip \
+  --require-no-partial-failures \
+  --write-report
+```
+
+`--require-cache-skip` is intended for the second `collect` run during FR-15 acceptance.
+`--require-no-partial-failures` is intended for final acceptance when every selected target must be collected without non-fatal failures.
+`--write-report` writes `metadata/acceptance-report.md` so issue and PR evidence can be attached without manually copying every JSON field.
+`--classification-rules` supports FR-16 tuning without adding an external AI dependency. The file is a JSON object with optional `categories` and `tags` objects:
+
+```json
+{
+  "categories": {
+    "rule": ["ADR", "architecture decision record"]
+  },
+  "tags": {
+    "architecture": ["ADR", "decision record"]
+  }
+}
+```
+
+Custom category keywords are evaluated before built-in classifier keywords. Custom tag keywords are merged with built-in tags.
+`suggest` is added in Phase 3+ (`apply` is not implemented until Phase 4 — Requirements §7).
 
 ### 8.2 Environment variables (.env)
 
 ```bash
 BACKLOG_SPACE_KEY=your-space
 BACKLOG_API_KEY=xxxxxxxx        # Required. Read permission is sufficient
+BACKLOG_PROJECT_KEY=PROJECT_KEY # Optional if --project is provided
 BACKLOG_DOMAIN=backlog.com      # Optional. Set for backlog.jp spaces
 ```
 
@@ -424,7 +458,7 @@ Create the new project `backlog-knowledge-packager/` alongside the existing `bac
 ```text
 backlog-knowledge-packager/
 ├── pyproject.toml            # Managed by uv (Python 3.12+ / requests / python-dotenv)
-├── .env.example              # BACKLOG_SPACE_KEY / BACKLOG_API_KEY / BACKLOG_DOMAIN
+├── .env.example              # BACKLOG_SPACE_KEY / BACKLOG_API_KEY / BACKLOG_PROJECT_KEY / BACKLOG_DOMAIN
 ├── .gitignore                # .env, output/, __pycache__, etc.
 ├── README.md                 # Usage and setup instructions
 ├── src/
@@ -440,15 +474,20 @@ backlog-knowledge-packager/
 │       │   ├── wikis.py      # Wiki list/contents/attachments
 │       │   └── shared_files.py  # Shared file list/DL
 │       ├── normalizer.py     # Normalization to KnowledgeItem, Markdown conversion (§3.2)
-│       ├── classifier.py     # Rule-based classification (§6)
+│       ├── classifier.py     # Rule/content-fallback classification and tags (§6)
+│       ├── sync.py           # Source-map cache and differential sync helpers (FR-15)
+│       ├── verify.py         # Generated package verifier for acceptance checks
 │       └── generator/
 │           ├── __init__.py
+│           ├── common.py     # Shared Markdown helpers
 │           ├── knowledge.py  # knowledge.md / knowledge.json (§7.2)
 │           ├── references.py # references.md (§7.3)
-│           ├── checklist.py  # setup-checklist.md (§7.4; onboarding.md in Phase 2)
+│           ├── checklist.py  # setup-checklist.md (§7.4; content-derived tasks in Phase 2)
+│           ├── onboarding.py # onboarding.md (FR-17)
+│           ├── warnings.py   # stale/duplicate/broken-link warnings (FR-19/FR-20)
 │           └── packager.py   # templates.zip (§7.5)
 ├── tests/
-│   └── test_classifier.py    # Unit tests for classification rules (runnable without the API)
+│   └── test_*.py             # Unit and CLI tests runnable without a real Backlog API key
 └── output/                   # Generated artifacts (not tracked by git)
 ```
 
