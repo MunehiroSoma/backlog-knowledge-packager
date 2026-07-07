@@ -214,6 +214,14 @@ def test_collect_shared_files_visits_each_directory_once(tmp_path) -> None:
     assert [call[0] for call in client.calls].count("/api/v2/projects/DEMO/files/metadata/docs") == 1
 
 
+def test_collect_shared_files_can_start_from_custom_root_path(tmp_path) -> None:
+    client = FakeClient()
+
+    collect_shared_files(client, "DEMO", tmp_path, root_path="/templates/")
+
+    assert client.calls[0][0] == "/api/v2/projects/DEMO/files/metadata/templates"
+
+
 def test_collect_shared_files_records_download_failure(tmp_path) -> None:
     class DownloadFailureClient(FakeClient):
         def download(self, endpoint, dest, params=None):

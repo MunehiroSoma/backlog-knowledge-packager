@@ -19,9 +19,10 @@ def collect_shared_files(
     cache: dict[tuple[str, str], CachedItem] | None = None,
     count: int = 100,
     download: bool = True,
+    root_path: str = "/",
 ) -> CollectionResult:
     failures: list[str] = []
-    files = _list_directory_recursive(client, project_key, "/", count=count, failures=failures, visited=set())
+    files = _list_directory_recursive(client, project_key, root_path, count=count, failures=failures, visited=set())
     item_cache = cache or {}
     changed = filter_updated_items("sharedFile", files, item_cache)
     downloaded = 0

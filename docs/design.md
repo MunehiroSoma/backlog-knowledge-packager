@@ -368,6 +368,7 @@ backlog-packager collect \
 | `--output` | — | Output directory | `./output/{PROJECT_KEY}` |
 | `--classification-rules` | — | Optional JSON file with project-specific classification category and tag keywords | none |
 | `--skip-attachment-downloads` | — | List document/wiki attachment metadata without downloading attachment bodies | false |
+| `--shared-file-path` | — | Shared-file directory path to collect recursively | `/` |
 
 `verify-output` verifies generated packages before handoff or Phase 2 acceptance:
 

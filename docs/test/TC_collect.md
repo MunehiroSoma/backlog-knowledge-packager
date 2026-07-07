@@ -48,6 +48,16 @@ uv run backlog-packager collect \
   --output ./output/PROJECT_KEY
 ```
 
+To verify shared-file downloads without collecting a very large tree, choose a small directory and record the scoped path privately:
+
+```bash
+uv run backlog-packager collect \
+  --project PROJECT_KEY \
+  --targets shared-files \
+  --shared-file-path /SMALL_DIRECTORY/ \
+  --output ./output/PROJECT_KEY-shared-file-download
+```
+
 For projects with many document or wiki attachments, attachment metadata-only collection is acceptable for a scoped acceptance run if it is recorded explicitly:
 
 ```bash
