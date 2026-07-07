@@ -592,8 +592,9 @@ Detect the following and output as `warnings.md` (or a `warnings` array inside `
 - Dry-run is the default; real writes require `--confirm-apply` and `BACKLOG_ENABLE_WRITE=1`
 - Phase 4 automatic apply supports Wiki pages only. Documents, shared files, and attachments are rejected for automatic apply.
 - Before any write, the command fetches current Wiki metadata and rejects the batch if any reviewed `updated` timestamp is stale.
-- Webhook sync and permission-aware answers are also designed at this stage (Requirements FR-23 / FR-26 / FR-27)
+- Webhook sync, Web UI / chatbot, and permission-aware RAG remain external operational extensions; the standard package stays CLI-only and dependency-light.
 - See [`phase4_apply_boundary.md`](./phase4_apply_boundary.md) for apply safeguards.
+- See [`phase4_operational_decisions.md`](./phase4_operational_decisions.md) for Phase 4 decisions covering FR-24 through FR-28.
 
 ---
 
