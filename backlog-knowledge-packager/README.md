@@ -1,13 +1,14 @@
 # Backlog Knowledge Packager
 
-Collects conventions, templates, past knowledge, and reference URLs scattered across Backlog (documents / wikis / shared files / attachments) in a **read-only** manner, and generates AI-readable Markdown, an onboarding reference list, a setup checklist, and a template zip.
+Collects conventions, templates, past knowledge, reference URLs, shared files, and attachments scattered across Backlog in a **read-oriented** manner. It generates AI-readable Markdown, structured source indexes, onboarding references, setup checklists, and template bundles.
 
 - Requirements: [`../docs/requirements.md`](../docs/requirements.md)
 - Design: [`../docs/design.md`](../docs/design.md)
 
 ## Core constraints
 
-- **Read-only against Backlog** (FR-11): the API client has no write methods
+- **Read-only by default against Backlog** (FR-11): the collection client has no write methods
+- **Writes are isolated to Phase 4 apply**: only approved Wiki proposals can be applied, and only with explicit opt-in
 - **Source URLs are mandatory** on every output (NFR-04)
 - **API keys live in `.env` only** (NFR-01): never committed, never logged
 
@@ -25,7 +26,7 @@ cp .env.example .env   # then fill in BACKLOG_SPACE_KEY / BACKLOG_API_KEY / BACK
 `BACKLOG_DOMAIN=backlog.com`. Use only letters, numbers, and hyphens in the
 space key.
 
-## Usage
+## Collect
 
 ```bash
 uv run backlog-packager collect \
@@ -36,13 +37,42 @@ uv run backlog-packager collect \
 
 `--project` may be omitted when `BACKLOG_PROJECT_KEY` is set in `.env`.
 
-`collect` writes `knowledge.md`, `knowledge.json`, `references.md`, `setup-checklist.md`, `onboarding.md`, `warnings.md`, `templates.zip`, `metadata/source-map.json`, `metadata/classification-summary.json`, `metadata/collection-summary.json`, and `metadata/partial-failures.json`.
+`collect` writes:
+
+- `document-index.md`: document tree index with clickable Backlog source links
+- `wiki-index.md`: slash-separated Wiki structure index with clickable Backlog source links
+- `knowledge.md` / `knowledge.json`: source-backed AI ingestion files
+- `references.md`, `setup-checklist.md`, `onboarding.md`, `warnings.md`
+- `templates.zip`
+- `metadata/source-map.json`, `metadata/classification-summary.json`, `metadata/collection-summary.json`, `metadata/partial-failures.json`
+
 On later runs, unchanged items are skipped by comparing source IDs and updated timestamps in the previous source map.
 `warnings.md` includes stale items, deprecated/old markers, same-name or similar-title duplicates, and optional broken-link checks.
 
 Use `--check-urls` when you want `warnings.md` to include unreachable URLs found inside item bodies. This performs additional network requests and is disabled by default.
 Use `--check-source-urls` only when Backlog source URLs are publicly reachable from this environment; private Backlog spaces may fail unauthenticated URL checks even when the source is valid.
 Use `--skip-shared-file-downloads` for very large shared-file trees when metadata, source URLs, and updated timestamps are enough for the review. Shared-file bodies will not be bundled in that mode.
+Use `--skip-attachment-downloads` when document/wiki attachment metadata is enough and attachment bodies should not be downloaded.
+
+For a smaller first run:
+
+```bash
+uv run backlog-packager collect \
+  --project PROJECT_KEY \
+  --targets documents,wiki,shared-files \
+  --skip-attachment-downloads \
+  --skip-shared-file-downloads \
+  --output ./output/PROJECT_KEY-meta
+```
+
+For a full file run:
+
+```bash
+uv run backlog-packager collect \
+  --project PROJECT_KEY \
+  --targets documents,wiki,shared-files \
+  --output ./output/PROJECT_KEY-full
+```
 
 For project-specific classification tuning, pass a JSON keyword file:
 
@@ -75,6 +105,45 @@ Use `--max-unclassified-rate 0.2` or another 0.0-1.0 threshold to fail verificat
 Use `--require-no-partial-failures` for final acceptance when every selected target must be collected without non-fatal failures.
 Use `--write-report` to write `metadata/acceptance-report.md` with the key Phase 2 evidence for issue or PR updates.
 `metadata/classification-summary.json` also reports average classification confidence, low-confidence item counts, and source-linked `unclassifiedItems` / `lowConfidenceItems` diagnostics for Phase 2 tuning.
+
+## Suggest, Review, and Apply
+
+Generate local proposal files from collected outputs:
+
+```bash
+uv run backlog-packager suggest \
+  --output ./output/PROJECT_KEY \
+  --suggestions ./output/PROJECT_KEY/suggestions
+```
+
+List approved local reviews:
+
+```bash
+uv run backlog-packager review-list \
+  --suggestions ./output/PROJECT_KEY/suggestions
+```
+
+Dry-run approved apply actions. This is the default and does not write to Backlog:
+
+```bash
+uv run backlog-packager apply \
+  --suggestions ./output/PROJECT_KEY/suggestions
+```
+
+Confirmed apply is Wiki-only and requires all of the following:
+
+- `BACKLOG_ENABLE_WRITE=1`
+- approved `*.review.json`
+- matching current Wiki `updated` timestamp
+- `--confirm-apply`
+
+```bash
+BACKLOG_ENABLE_WRITE=1 uv run backlog-packager apply \
+  --suggestions ./output/PROJECT_KEY/suggestions \
+  --confirm-apply
+```
+
+Documents, shared files, and attachments are not automatically applied.
 
 Recommended Phase 2 acceptance flow against a real Backlog project:
 

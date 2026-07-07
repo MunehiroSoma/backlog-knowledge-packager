@@ -235,6 +235,8 @@ output/
   PROJECT_KEY/
     knowledge.md          # Consolidated content for AI ingestion
     knowledge.json        # Structured data (KnowledgeItem array + contents)
+    document-index.md     # Document tree with clickable Backlog source links
+    wiki-index.md         # Wiki hierarchy with clickable Backlog source links
     references.md         # Reference URL list for new members
     setup-checklist.md    # Environment-setup checklist
     onboarding.md         # (Phase 2)
