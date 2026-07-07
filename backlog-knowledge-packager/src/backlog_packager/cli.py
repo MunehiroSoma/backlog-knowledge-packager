@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
+from .apply import ApplyError, apply_approved
 from .client import BacklogApiError, ReadOnlyBacklogClient
 from .classifier import classify_items, load_classification_rules
 from .collector import CollectionResult
@@ -18,6 +21,7 @@ from .normalizer import normalize_collection
 from .suggester import SuggestionError, generate_suggestions, list_reviews
 from .sync import load_cached_items
 from .verify import verify_project_output, write_acceptance_report
+from .write_client import BacklogWriteError, ExplicitBacklogWriteClient
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -102,6 +106,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Review status to list. Defaults to approved.",
     )
     review_list.set_defaults(handler=run_review_list)
+
+    apply_parser = subparsers.add_parser("apply", help="dry-run or apply approved local review entries")
+    apply_parser.add_argument("--suggestions", required=True, help="Directory containing approved *.review.json files.")
+    apply_parser.add_argument("--space", help="Backlog space key. Required only with --confirm-apply.")
+    apply_parser.add_argument("--domain", help="Backlog domain. Defaults to BACKLOG_DOMAIN or backlog.com.")
+    apply_parser.add_argument(
+        "--confirm-apply",
+        action="store_true",
+        help="Actually write approved wiki proposals to Backlog. Requires BACKLOG_ENABLE_WRITE=1.",
+    )
+    apply_parser.add_argument(
+        "--audit-log",
+        help="Local audit log path. Defaults to {suggestions}/apply-audit.md when --confirm-apply is used.",
+    )
+    apply_parser.set_defaults(handler=run_apply)
     return parser
 
 
@@ -234,6 +253,33 @@ def run_review_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_apply(args: argparse.Namespace) -> int:
+    try:
+        if args.confirm_apply:
+            base_url, api_key = _load_apply_write_config(args.space, args.domain)
+            read_client = ReadOnlyBacklogClient(base_url, api_key)
+            write_client = ExplicitBacklogWriteClient(base_url, api_key, enable_write=True)
+            audit_log = Path(args.audit_log) if args.audit_log else Path(args.suggestions) / "apply-audit.md"
+            results = apply_approved(
+                args.suggestions,
+                confirm_apply=True,
+                read_client=read_client,
+                write_client=write_client,
+                audit_log=audit_log,
+            )
+        else:
+            results = apply_approved(args.suggestions, confirm_apply=False)
+    except (ApplyError, SuggestionError, BacklogApiError, BacklogWriteError, OSError) as exc:
+        print(f"apply error: {exc}", file=sys.stderr)
+        return 1
+    for result in results:
+        action = result.action
+        state = "applied" if result.applied else "dry-run"
+        print(f"{state}: {action.source_type}:{action.source_id}\t{action.title}\t{action.url}")
+    print(f"{'applied' if args.confirm_apply else 'planned'} {len(results)} approved review entries", file=sys.stderr)
+    return 0
+
+
 def _collect_targets(
     client: ReadOnlyBacklogClient,
     project_key: str,
@@ -287,6 +333,19 @@ def _project_id(project: object) -> str | None:
     if value in (None, ""):
         return None
     return str(value)
+
+
+def _load_apply_write_config(space: str | None, domain: str | None) -> tuple[str, str]:
+    if os.getenv("BACKLOG_ENABLE_WRITE") != "1":
+        raise ApplyError("set BACKLOG_ENABLE_WRITE=1 to enable confirmed apply")
+    resolved_space = (space or os.getenv("BACKLOG_SPACE_KEY") or "").strip()
+    api_key = (os.getenv("BACKLOG_API_KEY") or "").strip()
+    resolved_domain = (domain or os.getenv("BACKLOG_DOMAIN") or "backlog.com").strip()
+    if not resolved_space:
+        raise ApplyError("BACKLOG_SPACE_KEY or --space is required")
+    if not api_key:
+        raise ApplyError("BACKLOG_API_KEY is required")
+    return f"https://{resolved_space}.{resolved_domain}", api_key
 
 
 if __name__ == "__main__":

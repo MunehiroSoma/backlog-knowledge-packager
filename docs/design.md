@@ -128,10 +128,11 @@ Base URL: `https://{space}.{domain}` (`domain` is `backlog.com` / `backlog.jp` e
 | Shared file list | `GET /api/v2/projects/:projectIdOrKey/files/metadata/:path` | Verify at implementation |
 | Shared file DL | `GET /api/v2/projects/:projectIdOrKey/files/:sharedFileId` | Verify at implementation |
 | Rate limit info | `GET /api/v2/rateLimit` | API reference confirmed; optional diagnostic endpoint |
+| Wiki update | `PATCH /api/v2/wikis/:wikiId` | Phase 4 `apply` only; separate write client |
 
 > **Note**: Endpoints marked "API reference confirmed; implementation pending" are confirmed in the public Backlog API reference but are not fully collected by the current MVP implementation. The connection/retrieval pattern for the `GET /api/v2/documents` family is already implemented in the POC (`backlog-api-poc/document.py`).
 >
-> Authentication: attach the `apiKey` query parameter to every request (same as the POC). **Write endpoints (POST / PATCH / PUT / DELETE) do not appear in this table = they are not used.**
+> Authentication: attach the `apiKey` query parameter to every request (same as the POC). Write endpoints are outside the read-only collection table except for the Phase 4 Wiki-only `apply` endpoint above.
 
 ### 4.1 Source URL construction rules (draft)
 
@@ -398,8 +399,9 @@ backlog-packager verify-output \
 ```
 
 Custom category keywords are evaluated before built-in classifier keywords. Custom tag keywords are merged with built-in tags.
-`suggest` is added in Phase 3+ (`apply` is not implemented until Phase 4 — Requirements §7).
+`suggest` is added in Phase 3+. `apply` is added in Phase 4 as a confirmed Wiki-only write flow.
 See [`phase3_suggest_review.md`](./phase3_suggest_review.md) for the local-only operations checklist.
+See [`phase4_apply_boundary.md`](./phase4_apply_boundary.md) for apply safeguards.
 
 ### 8.2 Environment variables (.env)
 
@@ -443,7 +445,7 @@ class ReadOnlyBacklogClient:
 ```
 
 - The `post` / `delete` methods of the POC (`backlog-api-poc/client.py`) are **not ported**
-- If `apply` mode is implemented in Phase 4, the writing client must be a separate class in a separate module that cannot be instantiated without explicit configuration
+- Phase 4 `apply` uses `ExplicitBacklogWriteClient` in a separate module and cannot instantiate it without explicit write configuration
 
 ### 9.2 Other safety measures
 
@@ -451,7 +453,8 @@ class ReadOnlyBacklogClient:
 |---------|-------------|
 | Secret management | Register `.env` and `output/` in `.gitignore` (prevent committing API keys / internal info — NFR-01) |
 | Log masking | Never log `apiKey` in logs/error messages (mask query strings when logging URLs) |
-| Suggest isolation | Phase 3 AI proposals are file outputs to the local `suggestions/` directory only (§13.1) |
+| Suggest isolation | Phase 3 AI proposals are file outputs to the local `suggestions/` directory only |
+| Apply isolation | Phase 4 apply reads only approved local review files, supports Wiki only, checks `updated` before writing, and keeps audit logs local |
 | Permissions | Follow Backlog-side permission settings. Issue the API key from a member with the minimum permissions needed for reading (NFR-02) |
 
 ---
@@ -510,6 +513,7 @@ Design points:
 |--------------------------|-------------------------------------|
 | dotenv + `requests.Session` + `apiKey` query pattern in `client.py` | **Inherited**, but reduced to GET / download only (§9.1) |
 | `post` / `delete` methods in `client.py` | Not ported (read-only enforcement) |
+| Write API calls | Phase 4 Wiki apply uses `write_client.py`; write methods are not added to `client.py` |
 | Base URL fixed to `backlog.com` | Made configurable via `BACKLOG_DOMAIN` (§8.2) |
 | `list_documents` / `get_document` in `document.py` | Extended with paging loops into `collector/documents.py` |
 | `create_document` in `document.py` | Not ported (write operation) |
@@ -583,10 +587,13 @@ Detect the following and output as `warnings.md` (or a `warnings` array inside `
 
 ### 13.3 apply mode (Phase 4)
 
-- Implement the writing client as a **separate module** from `ReadOnlyBacklogClient`
-- Only items whose `review.json` is `approved` are applied
+- The writing client is a **separate module** from `ReadOnlyBacklogClient`
+- Only items whose `*.review.json` status is `approved` are planned or applied
+- Dry-run is the default; real writes require `--confirm-apply` and `BACKLOG_ENABLE_WRITE=1`
+- Phase 4 automatic apply supports Wiki pages only. Documents, shared files, and attachments are rejected for automatic apply.
+- Before any write, the command fetches current Wiki metadata and rejects the batch if any reviewed `updated` timestamp is stale.
 - Webhook sync and permission-aware answers are also designed at this stage (Requirements FR-23 / FR-26 / FR-27)
-- See [`phase4_apply_boundary.md`](./phase4_apply_boundary.md) before designing or implementing apply mode.
+- See [`phase4_apply_boundary.md`](./phase4_apply_boundary.md) for apply safeguards.
 
 ---
 
