@@ -36,6 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="List shared-file metadata without downloading file bodies. Useful for very large shared-file trees.",
     )
     collect.add_argument(
+        "--skip-attachment-downloads",
+        action="store_true",
+        help="List document/wiki attachment metadata without downloading attachment bodies.",
+    )
+    collect.add_argument(
         "--classification-rules",
         help="Optional JSON file with project-specific classification category and tag keywords.",
     )
@@ -139,6 +144,7 @@ def run_collect(args: argparse.Namespace) -> int:
         config.output,
         cache,
         shared_file_downloads=not args.skip_shared_file_downloads,
+        attachment_downloads=not args.skip_attachment_downloads,
     )
     items = classify_items(
         normalize_collection(
@@ -230,12 +236,29 @@ def _collect_targets(
     output_dir,
     cache,
     shared_file_downloads: bool = True,
+    attachment_downloads: bool = True,
 ) -> CollectionResult:
     collection = CollectionResult()
     if "documents" in targets:
-        collection.extend(collect_documents(client, document_project_id, cache=cache))
+        collection.extend(
+            collect_documents(
+                client,
+                document_project_id,
+                output_dir=output_dir,
+                download_attachments=attachment_downloads,
+                cache=cache,
+            )
+        )
     if "wiki" in targets:
-        collection.extend(collect_wikis(client, project_key, cache=cache))
+        collection.extend(
+            collect_wikis(
+                client,
+                project_key,
+                output_dir=output_dir,
+                download_attachments=attachment_downloads,
+                cache=cache,
+            )
+        )
     if "shared-files" in targets:
         collection.extend(
             collect_shared_files(client, project_key, output_dir=output_dir, cache=cache, download=shared_file_downloads)

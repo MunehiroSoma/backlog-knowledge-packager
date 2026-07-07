@@ -367,6 +367,7 @@ backlog-packager collect \
 | `--targets` | — | Comma-separated set of `documents` / `wiki` / `shared-files` | all |
 | `--output` | — | Output directory | `./output/{PROJECT_KEY}` |
 | `--classification-rules` | — | Optional JSON file with project-specific classification category and tag keywords | none |
+| `--skip-attachment-downloads` | — | List document/wiki attachment metadata without downloading attachment bodies | false |
 
 `verify-output` verifies generated packages before handoff or Phase 2 acceptance:
 

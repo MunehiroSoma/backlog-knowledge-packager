@@ -14,6 +14,8 @@ def test_collect_all_targets_then_verify_output(monkeypatch, tmp_path) -> None:
         def get(self, endpoint, params=None):
             if endpoint in {"/api/v2/space", "/api/v2/projects/DEMO"}:
                 return {}
+            if endpoint == "/api/v2/documents/tree":
+                return []
             if endpoint == "/api/v2/documents":
                 return [
                     {
@@ -66,6 +68,8 @@ def test_collect_all_targets_then_verify_output(monkeypatch, tmp_path) -> None:
                     "created": "2026-07-01T00:00:00Z",
                     "updated": "2026-07-04T00:00:00Z",
                 }
+            if endpoint == "/api/v2/wikis/wiki-1/attachments":
+                return []
             if endpoint.startswith("/api/v2/projects/DEMO/files/metadata/"):
                 return [
                     {
@@ -133,6 +137,8 @@ def test_phase2_acceptance_flow_exercises_all_phase2_requirements(monkeypatch, t
         def get(self, endpoint, params=None):
             if endpoint in {"/api/v2/space", "/api/v2/projects/DEMO"}:
                 return {}
+            if endpoint == "/api/v2/documents/tree":
+                return []
             if endpoint == "/api/v2/documents":
                 return [
                     {
@@ -186,6 +192,8 @@ def test_phase2_acceptance_flow_exercises_all_phase2_requirements(monkeypatch, t
                         "updated": "2026-07-06T00:00:00Z",
                     },
                 ]
+            if endpoint.endswith("/attachments"):
+                return []
             if endpoint.startswith("/api/v2/wikis/"):
                 self.wiki_detail_calls += 1
                 wiki_id = endpoint.rsplit("/", 1)[-1]

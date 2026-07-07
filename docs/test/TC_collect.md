@@ -48,6 +48,16 @@ uv run backlog-packager collect \
   --output ./output/PROJECT_KEY
 ```
 
+For projects with many document or wiki attachments, attachment metadata-only collection is acceptable for a scoped acceptance run if it is recorded explicitly:
+
+```bash
+uv run backlog-packager collect \
+  --project PROJECT_KEY \
+  --targets documents,wiki,shared-files \
+  --skip-attachment-downloads \
+  --output ./output/PROJECT_KEY
+```
+
 Verify the generated package:
 
 ```bash
@@ -94,6 +104,7 @@ Record only sanitized facts:
 - `metadata/classification-summary.json` aggregate metrics.
 - Whether `metadata/partial-failures.json` is empty.
 - Whether shared files were downloaded or metadata-only.
+- Whether document/wiki attachments were downloaded or metadata-only.
 - Whether document tree, document attachments, and wiki attachments were exercised.
 
 Do not record:
