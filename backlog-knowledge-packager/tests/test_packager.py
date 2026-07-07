@@ -61,6 +61,8 @@ def test_write_project_outputs_creates_phase2_artifacts_and_zip(tmp_path) -> Non
         output.references_md,
         output.setup_checklist_md,
         output.onboarding_md,
+        output.document_index_md,
+        output.wiki_index_md,
         output.warnings_md,
         output.source_map_json,
         output.templates_zip,

@@ -15,6 +15,8 @@ REQUIRED_FILES = (
     "references.md",
     "setup-checklist.md",
     "onboarding.md",
+    "document-index.md",
+    "wiki-index.md",
     "warnings.md",
     "templates.zip",
     "metadata/source-map.json",

@@ -18,6 +18,7 @@ from .common import generated_at
 from .knowledge import render_knowledge_json, render_knowledge_markdown
 from .onboarding import render_onboarding_markdown
 from .references import render_references_markdown
+from .source_indexes import render_document_index_markdown, render_wiki_index_markdown
 from .warnings import detect_warnings, render_warnings_markdown
 
 
@@ -31,6 +32,8 @@ class ProjectOutput:
     references_md: Path
     setup_checklist_md: Path
     onboarding_md: Path
+    document_index_md: Path
+    wiki_index_md: Path
     warnings_md: Path
     source_map_json: Path
     templates_zip: Path
@@ -63,6 +66,8 @@ def write_project_outputs(
     references_md = output_dir / "references.md"
     setup_checklist_md = output_dir / "setup-checklist.md"
     onboarding_md = output_dir / "onboarding.md"
+    document_index_md = output_dir / "document-index.md"
+    wiki_index_md = output_dir / "wiki-index.md"
     warnings_md = output_dir / "warnings.md"
     source_map_json = metadata_dir / "source-map.json"
     templates_zip = output_dir / "templates.zip"
@@ -72,6 +77,8 @@ def write_project_outputs(
     _write_text(references_md, render_references_markdown(project_key, item_list, now))
     _write_text(setup_checklist_md, render_setup_checklist_markdown(project_key, item_list, now))
     _write_text(onboarding_md, render_onboarding_markdown(project_key, item_list, now))
+    _write_text(document_index_md, render_document_index_markdown(project_key, item_list, raw_metadata, now))
+    _write_text(wiki_index_md, render_wiki_index_markdown(project_key, item_list, now))
     _write_text(warnings_md, render_warnings_markdown(project_key, warning_list, now))
     _write_json(source_map_json, {"projectKey": project_key, "generated": generated_at(now), "items": [i.to_dict() for i in item_list]})
     _write_json(metadata_dir / "classification-summary.json", classification_summary(item_list))
@@ -98,6 +105,8 @@ def write_project_outputs(
         references_md=references_md,
         setup_checklist_md=setup_checklist_md,
         onboarding_md=onboarding_md,
+        document_index_md=document_index_md,
+        wiki_index_md=wiki_index_md,
         warnings_md=warnings_md,
         source_map_json=source_map_json,
         templates_zip=templates_zip,

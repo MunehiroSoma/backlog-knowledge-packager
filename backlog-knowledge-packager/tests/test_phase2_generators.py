@@ -3,6 +3,7 @@ from datetime import datetime
 from backlog_packager.generator.checklist import extract_checklist_tasks, render_setup_checklist_markdown
 from backlog_packager.generator.knowledge import render_knowledge_json
 from backlog_packager.generator.onboarding import render_onboarding_markdown
+from backlog_packager.generator.source_indexes import render_document_index_markdown, render_wiki_index_markdown
 from backlog_packager.generator.warnings import detect_warnings, render_warnings_markdown
 from backlog_packager.models import KnowledgeItem
 
@@ -169,3 +170,53 @@ def test_knowledge_json_contains_warnings_array() -> None:
 
     assert '"warnings"' in rendered
     assert '"sourceType": "document"' in rendered
+
+
+def test_document_index_uses_document_tree_with_source_links() -> None:
+    rendered = render_document_index_markdown(
+        "DEMO",
+        [
+            item("1", "Root doc", "reference"),
+            item("2", "Child doc", "reference"),
+        ],
+        {
+            "documents": {
+                "tree": {
+                    "activeTree": {
+                        "id": "root",
+                        "name": "Root",
+                        "children": [
+                            {
+                                "id": "1",
+                                "name": "Root doc",
+                                "children": [{"id": "2", "name": "Child doc", "children": []}],
+                            }
+                        ],
+                    }
+                }
+            }
+        },
+        NOW,
+    )
+
+    assert "# DEMO document structure" in rendered
+    assert "- Root" in rendered
+    assert "  - [Root doc](https://example.backlog.com/document/1)" in rendered
+    assert "    - [Child doc](https://example.backlog.com/document/2)" in rendered
+
+
+def test_wiki_index_uses_slash_separated_wiki_names_with_source_links() -> None:
+    rendered = render_wiki_index_markdown(
+        "DEMO",
+        [
+            item("1", "Team/Rules/Review", "rule", source_type="wiki"),
+            item("2", "Team/Setup", "setup", source_type="wiki"),
+        ],
+        NOW,
+    )
+
+    assert "# DEMO wiki structure" in rendered
+    assert "- Team" in rendered
+    assert "  - Rules" in rendered
+    assert "    - [Review](https://example.backlog.com/wiki/1)" in rendered
+    assert "  - [Setup](https://example.backlog.com/wiki/2)" in rendered
