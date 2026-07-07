@@ -190,6 +190,12 @@ Through MVP–Phase 3, the flow ends at "F: apply to Backlog manually". Automate
 | **Phase 3** | AI update proposals, diff display, human review | + suggest / review |
 | **Phase 4** | Apply after approval, webhook sync, permission-aware search | + apply |
 
+Phase 4 implementation scope:
+
+- `apply` is implemented in the standard CLI package with explicit confirmation.
+- Webhook sync, Web UI / chatbot integration, permission-aware answers, and full RAG remain external operational extensions unless a separate deployment owner, permission model, and dependency justification are defined.
+- See [`phase4_operational_decisions.md`](./phase4_operational_decisions.md) for the FR-24 through FR-28 decision record.
+
 ### MVP (v0.1) definition
 
 ```text
