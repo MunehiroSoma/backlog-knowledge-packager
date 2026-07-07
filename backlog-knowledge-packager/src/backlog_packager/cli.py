@@ -36,6 +36,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="List shared-file metadata without downloading file bodies. Useful for very large shared-file trees.",
     )
     collect.add_argument(
+        "--shared-file-path",
+        default="/",
+        help="Shared-file directory path to collect recursively. Defaults to the project root.",
+    )
+    collect.add_argument(
         "--skip-attachment-downloads",
         action="store_true",
         help="List document/wiki attachment metadata without downloading attachment bodies.",
@@ -144,6 +149,7 @@ def run_collect(args: argparse.Namespace) -> int:
         config.output,
         cache,
         shared_file_downloads=not args.skip_shared_file_downloads,
+        shared_file_path=args.shared_file_path,
         attachment_downloads=not args.skip_attachment_downloads,
     )
     items = classify_items(
@@ -236,6 +242,7 @@ def _collect_targets(
     output_dir,
     cache,
     shared_file_downloads: bool = True,
+    shared_file_path: str = "/",
     attachment_downloads: bool = True,
 ) -> CollectionResult:
     collection = CollectionResult()
@@ -261,7 +268,14 @@ def _collect_targets(
         )
     if "shared-files" in targets:
         collection.extend(
-            collect_shared_files(client, project_key, output_dir=output_dir, cache=cache, download=shared_file_downloads)
+            collect_shared_files(
+                client,
+                project_key,
+                output_dir=output_dir,
+                cache=cache,
+                download=shared_file_downloads,
+                root_path=shared_file_path,
+            )
         )
     return collection
 
