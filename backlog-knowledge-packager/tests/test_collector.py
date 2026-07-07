@@ -13,12 +13,16 @@ class FakeClient:
         self.calls.append((endpoint, params))
         if endpoint == "/api/v2/documents":
             return [{"id": "1", "title": "doc", "updated": "2026-07-01T00:00:00Z"}]
+        if endpoint == "/api/v2/documents/tree":
+            return [{"id": "1", "title": "doc"}]
         if endpoint == "/api/v2/documents/1":
             return {"id": "1", "title": "doc", "plain": "body", "updated": "2026-07-01T00:00:00Z"}
         if endpoint == "/api/v2/wikis":
             return [{"id": 2, "name": "wiki", "updated": "2026-07-01T00:00:00Z"}]
         if endpoint == "/api/v2/wikis/2":
             return {"id": 2, "name": "wiki", "content": "body", "updated": "2026-07-01T00:00:00Z"}
+        if endpoint == "/api/v2/wikis/2/attachments":
+            return []
         if endpoint.startswith("/api/v2/projects/DEMO/files/metadata/"):
             return [{"id": 3, "type": "file", "dir": "/", "name": "template.md", "updated": "2026-07-01T00:00:00Z"}]
         return {}
@@ -39,6 +43,31 @@ def test_collect_documents_fetches_list_and_changed_details() -> None:
     assert ("/api/v2/documents/1", None) in client.calls
     assert result.summary["documents"]["listed"] == 1
     assert result.summary["documents"]["detailFetched"] == 1
+    assert result.summary["documents"]["treeFetched"] == 1
+    assert result.metadata["documents"]["tree"] == [{"id": "1", "title": "doc"}]
+
+
+def test_collect_documents_downloads_detail_attachments(tmp_path) -> None:
+    class AttachmentClient(FakeClient):
+        def get(self, endpoint, params=None):
+            if endpoint == "/api/v2/documents/1":
+                return {
+                    "id": "1",
+                    "title": "doc",
+                    "plain": "body",
+                    "updated": "2026-07-01T00:00:00Z",
+                    "attachments": [{"id": 9, "name": "diagram.png", "created": "2026-07-01T00:00:00Z"}],
+                }
+            return super().get(endpoint, params)
+
+    client = AttachmentClient()
+
+    result = collect_documents(client, "DEMO", output_dir=tmp_path)
+
+    assert result.attachments[0]["contentPath"] == "files/attachments/documents/1/diagram.png"
+    assert client.downloads[0][0] == "/api/v2/documents/1/attachments/9"
+    assert result.summary["documents"]["attachments"] == 1
+    assert result.summary["documents"]["attachmentDownloaded"] == 1
 
 
 def test_collect_documents_records_detail_failure() -> None:
@@ -71,6 +100,21 @@ def test_collect_documents_records_list_failure() -> None:
     assert result.failures == ["documents skipped: GET https://space.backlog.com/api/v2/documents failed with status 400"]
 
 
+def test_collect_documents_records_tree_failure() -> None:
+    class TreeFailureClient(FakeClient):
+        def get(self, endpoint, params=None):
+            if endpoint == "/api/v2/documents/tree":
+                raise BacklogApiError("GET https://space.backlog.com/api/v2/documents/tree failed with status 404")
+            return super().get(endpoint, params)
+
+    result = collect_documents(TreeFailureClient(), "123")
+
+    assert result.summary["documents"]["treeFetched"] == 0
+    assert result.failures == [
+        "document tree skipped: GET https://space.backlog.com/api/v2/documents/tree failed with status 404"
+    ]
+
+
 def test_collect_wikis_fetches_details() -> None:
     client = FakeClient()
 
@@ -80,6 +124,23 @@ def test_collect_wikis_fetches_details() -> None:
     assert ("/api/v2/wikis/2", None) in client.calls
     assert result.summary["wiki"]["listed"] == 1
     assert result.summary["wiki"]["detailFetched"] == 1
+
+
+def test_collect_wikis_downloads_attachments(tmp_path) -> None:
+    class WikiAttachmentClient(FakeClient):
+        def get(self, endpoint, params=None):
+            if endpoint == "/api/v2/wikis/2/attachments":
+                return [{"id": 10, "name": "runbook.pdf", "created": "2026-07-01T00:00:00Z"}]
+            return super().get(endpoint, params)
+
+    client = WikiAttachmentClient()
+
+    result = collect_wikis(client, "DEMO", output_dir=tmp_path)
+
+    assert result.attachments[0]["contentPath"] == "files/attachments/wikis/2/runbook.pdf"
+    assert client.downloads[0][0] == "/api/v2/wikis/2/attachments/10"
+    assert result.summary["wiki"]["attachments"] == 1
+    assert result.summary["wiki"]["attachmentDownloaded"] == 1
 
 
 def test_collect_wikis_records_detail_failure() -> None:
@@ -94,6 +155,21 @@ def test_collect_wikis_records_detail_failure() -> None:
     assert result.wikis[0]["name"] == "wiki"
     assert result.summary["wiki"]["detailFetched"] == 0
     assert result.failures == ["wiki detail skipped: 2: GET https://space.backlog.com/api/v2/wikis/2 failed with status 404"]
+
+
+def test_collect_wikis_records_attachment_list_failure(tmp_path) -> None:
+    class AttachmentFailureClient(FakeClient):
+        def get(self, endpoint, params=None):
+            if endpoint == "/api/v2/wikis/2/attachments":
+                raise BacklogApiError("GET https://space.backlog.com/api/v2/wikis/2/attachments failed with status 404")
+            return super().get(endpoint, params)
+
+    result = collect_wikis(AttachmentFailureClient(), "DEMO", output_dir=tmp_path)
+
+    assert result.attachments == []
+    assert result.failures == [
+        "wiki attachments skipped: 2: GET https://space.backlog.com/api/v2/wikis/2/attachments failed with status 404"
+    ]
 
 
 def test_collect_shared_files_downloads_changed_files(tmp_path) -> None:

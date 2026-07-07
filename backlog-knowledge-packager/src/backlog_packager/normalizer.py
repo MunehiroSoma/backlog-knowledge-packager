@@ -19,6 +19,7 @@ def normalize_collection(
     items.extend(normalize_documents(collection.documents, project_key, base_url, output_dir))
     items.extend(normalize_wikis(collection.wikis, project_key, base_url, output_dir))
     items.extend(normalize_shared_files(collection.shared_files, project_key, base_url))
+    items.extend(normalize_attachments(collection.attachments, project_key, base_url))
     return items
 
 
@@ -113,6 +114,43 @@ def normalize_shared_files(
             KnowledgeItem(
                 id=f"sharedFile-{source_id}",
                 source_type="sharedFile",
+                source_id=source_id,
+                project_key=project_key,
+                title=title,
+                url=url,
+                created=_string(raw.get("created")) or None,
+                created_user=_user_name(raw.get("createdUser")),
+                updated=updated,
+                updated_user=_user_name(raw.get("updatedUser")),
+                content_path=content_path,
+                content="",
+            )
+        )
+    return items
+
+
+def normalize_attachments(
+    attachments: list[dict[str, Any]],
+    project_key: str,
+    base_url: str,
+) -> list[KnowledgeItem]:
+    items: list[KnowledgeItem] = []
+    for raw in attachments:
+        source_id = _string(raw.get("id"))
+        title = _string(raw.get("name") or raw.get("filename"))
+        updated = _string(raw.get("updated") or raw.get("created"))
+        parent_type = _string(raw.get("parentType"))
+        parent_id = _string(raw.get("parentId"))
+        if not source_id or not title or not updated or not parent_type or not parent_id:
+            continue
+        content_path = _safe_content_path(raw.get("contentPath"))
+        parent_url = _string(raw.get("parentUrl"))
+        fallback = parent_url or f"{base_url.rstrip('/')}/{parent_type}/{parent_id}"
+        url = _source_url(raw, fallback)
+        items.append(
+            KnowledgeItem(
+                id=f"attachment-{parent_type}-{parent_id}-{source_id}",
+                source_type="attachment",
                 source_id=source_id,
                 project_key=project_key,
                 title=title,
